@@ -16,3 +16,20 @@ body {
 .sidebar {
     margin-left: 15px;
 }
+
+#addlayer {
+    margin:0 auto;
+    display:block;
+}
+
+h2 {
+    text-align: center;
+}
+
+.hidden {
+    display: none !important;
+}
+
+#added {
+    margin-bottom: 10px;
+}

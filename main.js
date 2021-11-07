@@ -1,3 +1,7 @@
+// const { ol } = require("./libs/v6.9.0-dist/ol");
+
+// const { ol } = require("./libs/v6.9.0-dist/ol");
+
 window.onload = init;
 
 function init() {
@@ -23,7 +27,7 @@ function init() {
     //basemaps
     const openStreetMapStandard = new ol.layer.Tile({
         source: new ol.source.OSM(),
-        visible: true,
+        visible: false,
         title: "OSMStandard"
     });
 
@@ -40,7 +44,7 @@ function init() {
             url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg",
             attributions: `Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.`
         }),
-        visible: false,
+        visible: true,
         title: "StamenTerrain"
     });
 
@@ -69,20 +73,71 @@ function init() {
           title: 'USATopo'
     });
     // map.addLayer(stamenTerrain);
-
+    
+      
     //Layer Group
     const baseLayerGroup = new ol.layer.Group({
         layers: [openStreetMapStandard, openStreetMapHumanitarian, stamenTerrain, worldTopo, usaTopo]
     });
 
+
     map.addLayer(baseLayerGroup);
 
     //layer switcher logic for basemaps
-    const baseLayerElements = document.querySelectorAll('input[type=radio]');
+    // const baseLayerElements = document.querySelectorAll('input[type=radio]');
+    const baseLayerElements = document.querySelectorAll('.basemap');
+    const basedLayerElements = document.querySelectorAll('.baselayer');
 
-    // for(let i of baseLayerElements) {
-    //     console.log(i)
-    // }
+    const randomlayer = new ol.layer.Image({
+        title: "Wetlands",
+        visible: true,
+        source: new ol.source.ImageWMS({
+            url: "http://localhost:8080/geoserver/wms",
+            params: {'LAYERS': 'nyc:nyc_wetlands'},
+            ratio: 1,
+            serverType: 'geoserver'
+        })
+    });
+    
+    const nyclayer = new ol.layer.Image({
+        title: "Streets and Highways Reconstruction",
+        source: new ol.source.ImageWMS({
+            url: "http://localhost:8080/geoserver/wms",
+            params: {'LAYERS': 'nyc:street_and_highway'},
+            ratio: 1,
+            serverType: 'geoserver'
+        }),
+        visible: false
+    });
+
+    // nyclayer.setVisible();
+
+    const cafelayer = new ol.layer.Image({
+        title: "Sidewalk Cafe Regulations",
+        visible: false,
+        source: new ol.source.ImageWMS({
+            url: "http://localhost:8080/geoserver/wms",
+            params: {'LAYERS': 'nyc:sidewalk_cafe'},
+            ratio: 1,
+            serverType: 'geoserver'
+        })
+    });
+    // const nyclayer = new ol.layer.WMS("Wetlands", 
+    //     "http://localhost:8080/geoserver/wms/nyc", {layers: 'nyc:nyc_roads'});
+
+    const basedLayerGroup = new ol.layer.Group({
+        layers: [nyclayer, randomlayer, cafelayer]
+    });
+
+    console.log(basedLayerGroup.getLayers());
+
+    const addedLayerGroup = new ol.layer.Group({
+        layer: []
+    });
+
+    map.addLayer(basedLayerGroup);
+    map.addLayer(addedLayerGroup);
+
     let whichChecked = 'OSMStandard';
     baseLayerElements.forEach((baseLayerElement) => {
         baseLayerElement.addEventListener('change', () => {
@@ -99,18 +154,143 @@ function init() {
         })
     });
 
-    map.on('moveend', (e) => {
-        baseLayerGroup.getLayers().forEach((element, index, array) => {
-            if(Math.round(map.getView().getZoom()) < 15) {
-                console.log(`element index: ${index} \ncurrentthing: ${Math.round(map.getView().getZoom()) - 11}`)
-                element.setVisible(index == Math.round(map.getView().getZoom()) - 11);
-            } else {
-                let baseLayerTitle = element.get('title');
-                element.setVisible(baseLayerTitle === whichChecked);
-                console.log(whichChecked);
-            }
+    let whichCheckedLayers = 'Wetlands';
+    basedLayerElements.forEach((basedLayerElement) => {
+        basedLayerElement.addEventListener('change', () => {
+            let basedLayerElementValue = basedLayerElement.value;
+            basedLayerGroup.getLayers().forEach((element, index, array) => {
+                let basedLayerTitle = element.get('title');
+                element.setVisible(basedLayerTitle === basedLayerElementValue);
+                if(basedLayerTitle === basedLayerElementValue) {
+                    whichCheckedLayers = basedLayerElementValue;
+                }
+            })
         })
-        console.log(Math.round(map.getView().getZoom()))
+    });
+
+    // map.on('moveend', (e) => {
+    //     baseLayerGroup.getLayers().forEach((element, index, array) => {
+    //         if(Math.round(map.getView().getZoom()) < 15) {
+    //             console.log(`element index: ${index} \ncurrentthing: ${Math.round(map.getView().getZoom()) - 11}`)
+    //             element.setVisible(index == Math.round(map.getView().getZoom()) - 11);
+    //         } else {
+    //             let baseLayerTitle = element.get('title');
+    //             element.setVisible(baseLayerTitle === whichChecked);
+    //             console.log(whichChecked);
+    //         }
+    //     })
+    //     console.log(Math.round(map.getView().getZoom()))
+    // })
+
+    let currentZoom = map.getView().getZoom();
+    map.on('moveend', (e) => {
+        if(currentZoom != map.getView().getZoom()) {
+            currentZoom = map.getView().getZoom();
+            basedLayerGroup.getLayers().forEach((element, index, array) => {
+                if(Math.round(map.getView().getZoom()) - 12 >= 0 && Math.round(map.getView().getZoom()) < 15) {
+                    console.log(`element index: ${index} \ncurrentthing: ${Math.round(map.getView().getZoom()) - 12}`)
+                    element.setVisible(index == Math.round(map.getView().getZoom()) - 12);
+                    console.log(element.get('title'));
+                } else {
+                    let basedLayerTitle = element.get('title');
+                    element.setVisible(basedLayerTitle === whichCheckedLayers);
+                }
+            })
+            console.log(Math.round(map.getView().getZoom()))
+        }
     })
     // console.log(baseLayerElements);
+
+
+    // let url = 'http://localhost:8080/geoserver/rest/workspaces/nyc/featuretypes.json';
+
+    // fetch(url)
+    // .then(res => res.json())
+    // .then(out =>
+    // console.log('Checkout this JSON! ', out))
+    // .catch(err => console.log(err));
+
+    const addedlayers = ['Wetlands in NYC', 'Street and Highway Capital Reconstruction Projects', 'Sidewalk Cafe'];
+
+    const additional = document.querySelector('#additional');
+    const added = document.querySelector('#added');
+    const addlayerbtn = document.querySelector('#addlayer');
+    const addselectedbtn = document.querySelector('#addselected');
+
+    addlayerbtn.addEventListener('click', function(e) {
+        const parser = new ol.format.WMSCapabilities();
+
+        fetch('http://localhost:8080/geoserver/wms?service=wms&version=1.1.1&request=GetCapabilities')
+        .then(function (response) {
+            return response.text();
+        })
+        .then(function (text) {
+            const result = parser.read(text);
+            const a = result['Capability']['Layer']['Layer']
+            // console.log(result['Capability']['Layer']['Layer'])
+            for(let i = 0; i < a['length']; i++) {
+                if(!addedlayers.includes(a[i].Title)) {
+                    let addthis = `<label for="` + a[i].Name + `">` + "\n" + `<input type="checkbox" ` + `class="newadds" id="` + a[i].Title + `" name="` + a[i].Name + `" value="` + a[i].Name + `">` + a[i].Title + "\n" + `</label><br>`;
+                    additional.innerHTML += addthis;
+                    console.log("Name: " + a[i].Name + "\nTitle: " + a[i].Title + "\nAbstract: " + a[i].Abstract);
+                }
+            }
+            addlayerbtn.classList.add('hidden');
+            addselectedbtn.classList.remove('hidden');
+            // console.log(a['length'])
+            // document.getElementById('log').innerText = JSON.stringify(result, null, 2);
+        });
+    });
+
+    addselectedbtn.addEventListener('click', function(e) {
+        const checks = document.querySelectorAll('.newadds');
+        checks.forEach((e) => {
+            if(e.checked) {
+                console.log(e.value);
+                const newlayer = new ol.layer.Image({
+                    title: e.id,
+                    visible: false,
+                    source: new ol.source.ImageWMS({
+                        url: "http://localhost:8080/geoserver/wms",
+                        params: {'LAYERS': e.value},
+                        ratio: 1,
+                        serverType: 'geoserver'
+                    })
+                });
+                addedLayerGroup.getLayers().insertAt(0, newlayer);
+                console.log(addedLayerGroup.getLayers());
+                addedlayers.push(e.id);
+                let addthis = `<input type="radio" class='addedlayer' name='addedLayerRadio' value='${e.id}'>${e.id}<br>`;
+                added.innerHTML += addthis;
+                addlayerbtn.classList.remove('hidden');
+                addselectedbtn.classList.add('hidden');
+                while(additional.firstChild) {
+                    additional.removeChild(additional.firstChild);
+                }
+                somefunction();
+            }
+        });
+    });
+
+
+    let lastChecked = "";
+    function somefunction() {
+        if(addedlayers.length != 0) {
+            // console.log("heerre")
+            const addedLayerElements = document.querySelectorAll('.addedlayer');
+            addedLayerElements.forEach((addedLayerElement) => {
+                addedLayerElement.addEventListener('change', () => {
+                    let addedLayerElementValue = addedLayerElement.value;
+                    // console.log(addedLayerElementValue);
+                    addedLayerGroup.getLayers().forEach((element, index, array) => {
+                        console.log(element.get('title'));
+                        let addedLayerTitle = element.get('title');
+                        element.setVisible(addedLayerTitle === addedLayerElementValue);
+                    })
+                })
+            });
+        }
+    }
+    
+    
 };

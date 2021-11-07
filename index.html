@@ -10,14 +10,29 @@
     <div class="grid-container">
         <div class="grid-1">
             <div class="sidebar">
-                <h2>Base Layers</h2>
+                <h2>Base Maps</h2>
                 <!-- <input type="radio" name='baseLayerRadioButton' value='OSMStandard' checked>OSM Standard<br> -->
-                <input type="radio" name='baseLayerRadioButton' value='OSMStandard'>OSM Standard<br>
-                <input type="radio" name='baseLayerRadioButton' value='OSMHumanitarian'>OSM Humanitarian<br>
-                <input type="radio" name='baseLayerRadioButton' value='StamenTerrain'>Stamen Terrain<br>
-                <input type="radio" name='baseLayerRadioButton' value='randomArcGIS'>World Topographical<br>
-                <input type="radio" name='baseLayerRadioButton' value='USATopo'>USA Topographical<br>
+                <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMStandard'>OSM Standard<br>
+                <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMHumanitarian'>OSM Humanitarian<br>
+                <input type="radio" class='basemap' name='baseLayerRadioButton' value='StamenTerrain' checked>Stamen Terrain<br>
+                <input type="radio" class='basemap' name='baseLayerRadioButton' value='randomArcGIS'>World Topographical<br>
+                <input type="radio" class='basemap' name='baseLayerRadioButton' value='USATopo'>USA Topographical<br>
+
+                <h2>Base Map Layers</h2>
+                <input type="radio" class='baselayer' name='basedLayerRadioButton' value='Streets and Highways Reconstruction'>Streets and Highways Reconstruction<br>
+                <input type="radio" class='baselayer' name='basedLayerRadioButton' value='Wetlands' checked>Wetlands<br>
+                <input type="radio" class='baselayer' name='basedLayerRadioButton' value='Sidewalk Cafe Regulations'>Sidewalk Cafe Regulations<br>
+                <h2>Additional Layers</h2>
+                <div id="added">
+                    
+                </div>
+                <div id="additional">
+                    
+                </div>
+                <button id="addlayer">Add layer from Geoserver</button>
+                <button id="addselected" class="hidden">Add selected layers</button>
             </div>
+            <!-- <p id="log"></p> -->
         </div>
         <div class="grid-2">
             <div id="js-map" class="map"></div>
