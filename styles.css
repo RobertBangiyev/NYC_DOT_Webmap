@@ -18,7 +18,7 @@ body {
 }
 
 #addlayer {
-    margin:0 auto;
+    margin:auto auto 10px auto;
     display:block;
 }
 
@@ -32,4 +32,35 @@ h2 {
 
 #added {
     margin-bottom: 10px;
+}
+
+#additional {
+    max-height: 250px;
+    overflow: auto;
+}
+
+#addselected {
+    display: block;
+    margin: 10px auto;
+}
+
+#datalayer {
+    margin:0 auto;
+    display:block;
+}
+
+#myFile {
+    display: block;
+    margin: 10px auto;
+    text-align: center;
+}
+
+#titlelayer {
+    display: block;
+    margin: 10px auto;
+}
+
+#addpicked {
+    margin:0 auto;
+    display:block;
 }

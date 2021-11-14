@@ -3,17 +3,11 @@ window.onload = init;
 function init() {
     const map = new ol.Map({
         view: new ol.View({
-            // projection: 'EPSG:2263' <-figure out how to make this work
             center: [-8236575.792110519, 4973235.140319245],
             zoom: 5,
             minZoom: 4,
             extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
         }),
-        // layers: [
-        //     new ol.layer.Tile({
-        //         source: new ol.source.OSM()
-        //     })
-        // ],
         target: 'js-map'
     })
     map.on('click', (e) => console.log(e.coordinate));
@@ -71,7 +65,6 @@ function init() {
         layers: [openStreetMapStandard, openStreetMapHumanitarian, stamenTerrain, worldTopo, usaTopo]
     });
 
-
     map.addLayer(baseLayerGroup);
 
     const baseLayerElements = document.querySelectorAll('.basemap');
@@ -127,13 +120,11 @@ function init() {
     baseLayerElements.forEach((baseLayerElement) => {
         baseLayerElement.addEventListener('change', () => {
             let baseLayerElementValue = baseLayerElement.value;
-            // console.log("here");
             baseLayerGroup.getLayers().forEach((element, index, array) => {
                 let baseLayerTitle = element.get('title');
                 element.setVisible(baseLayerTitle === baseLayerElementValue);
                 if(baseLayerTitle === baseLayerElementValue) {
                     whichChecked = baseLayerElementValue;
-                    console.log(whichChecked);
                 }
             })
         })
@@ -191,7 +182,6 @@ function init() {
                 if(!addedlayers.includes(a[i].Title)) {
                     let addthis = `<label for="` + a[i].Name + `">` + "\n" + `<input type="checkbox" ` + `class="newadds" id="` + a[i].Title + `" name="` + a[i].Name + `" value="` + a[i].Name + `">` + a[i].Title + "\n" + `</label><br>`;
                     additional.innerHTML += addthis;
-                    console.log("Name: " + a[i].Name + "\nTitle: " + a[i].Title + "\nAbstract: " + a[i].Abstract);
                 }
             }
             addlayerbtn.classList.add('hidden');
@@ -217,8 +207,12 @@ function init() {
                 addedLayerGroup.getLayers().insertAt(0, newlayer);
                 console.log(addedLayerGroup.getLayers());
                 addedlayers.push(e.id);
-                let addthis = `<input type="radio" class='addedlayer' name='addedLayerRadio' value='${e.id}'>${e.id}<br>`;
+                let addthis = `<input type="radio" class='addedlayer' name='addedLayerRadio' id='${e.id}' value='${e.id}'>${e.id}<br>`;
                 added.innerHTML += addthis;
+                if(layerschecked != "") {
+                    document.getElementById(`${layerschecked}`).checked = true;
+                    console.log("got here");
+                }
                 addlayerbtn.classList.remove('hidden');
                 addselectedbtn.classList.add('hidden');
                 while(additional.firstChild) {
@@ -229,6 +223,7 @@ function init() {
         });
     });
 
+    let layerschecked = "";
     function somefunction() {
         if(addedlayers.length != 0) {
             const addedLayerElements = document.querySelectorAll('.addedlayer');
@@ -236,12 +231,66 @@ function init() {
                 addedLayerElement.addEventListener('change', () => {
                     let addedLayerElementValue = addedLayerElement.value;
                     addedLayerGroup.getLayers().forEach((element, index, array) => {
-                        console.log(element.get('title'));
                         let addedLayerTitle = element.get('title');
                         element.setVisible(addedLayerTitle === addedLayerElementValue);
+                        layerschecked = addedLayerElementValue;
                     })
                 })
             });
         }
     } 
+    const datalayerbtn = document.querySelector('#datalayer')
+    const addfile = document.querySelector("#myFile")
+    const titlelayer = document.querySelector("#titlelayer")
+    const adddatalayerbtn = document.querySelector("#addpicked")
+
+    datalayerbtn.addEventListener('click', () => {
+        datalayerbtn.classList.add('hidden')
+        titlelayer.classList.remove('hidden')
+        addfile.classList.remove('hidden');
+        adddatalayerbtn.classList.remove('hidden');
+    })
+
+    adddatalayerbtn.addEventListener('click', () => {
+        const title = titlelayer.value
+        let addthis = `<input type="radio" class='addedlayer' name='addedLayerRadio' id='${title}' value='${title}'>${title}<br>`;
+        added.innerHTML += addthis;
+        if(layerschecked != "") {
+            document.getElementById(`${layerschecked}`).checked = true;
+            console.log("got here");
+        }
+        const importedFile = addfile.files[0]
+        console.log(importedFile);
+        if(importedFile.name.substr(importedFile.name.length-7) == 'geojson') {
+            const reader = new FileReader();
+            reader.onload = function() {
+                const vector = new ol.layer.Vector({
+                    title: title,
+                    visible: false,
+                    source: new ol.source.Vector({
+                        url: reader.result,
+                        format: new ol.format.GeoJSON()
+                    })
+                });
+                addedLayerGroup.getLayers().insertAt(0, vector);
+                vector.setVisible(false);
+            }
+                reader.readAsDataURL(importedFile);
+        }
+        const justadded = document.querySelector(`#${title}`);
+        justadded.addEventListener('change', () => {
+            let addedLayerElementValue = justadded.value;
+            addedLayerGroup.getLayers().forEach((element, index, array) => {
+                let addedLayerTitle = element.get('title');
+                element.setVisible(addedLayerTitle === addedLayerElementValue);
+                layerschecked = addedLayerElementValue;
+            })
+        })
+        datalayerbtn.classList.remove('hidden')
+        titlelayer.classList.add('hidden')
+        addfile.classList.add('hidden');
+        adddatalayerbtn.classList.add('hidden');
+        titlelayer.value = "";
+        addfile.value = "";
+    })
 };
