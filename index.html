@@ -33,7 +33,7 @@
                 <button id="addselected" class="hidden">Add selected layers</button>
 
                 <button id="datalayer">Add layer from data</button>
-                <input type="file" id="myFile" class="hidden" accept=".geojson, .shp, .csv">
+                <input type="file" id="myFile" class="hidden" accept=".geojson, .shp, .csv, .zip">
                 <!-- <label for="titlelayer" class=>Name of Layer: </label> -->
                 <input type="text" class="hidden" id="titlelayer" name="titlelayer" placeholder="Enter name of Layer">
                 <button id="addpicked" class="hidden">Add</button>
@@ -49,5 +49,6 @@
     </div>
     <script src="./main.js"></script>
     <script src="libs/v6.9.0-dist/ol.js"></script>
+    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 </body>
 </html>

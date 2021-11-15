@@ -260,7 +260,6 @@ function init() {
             console.log("got here");
         }
         const importedFile = addfile.files[0]
-        console.log(importedFile);
         if(importedFile.name.substr(importedFile.name.length-7) == 'geojson') {
             const reader = new FileReader();
             reader.onload = function() {
@@ -273,19 +272,48 @@ function init() {
                     })
                 });
                 addedLayerGroup.getLayers().insertAt(0, vector);
-                vector.setVisible(false);
             }
-                reader.readAsDataURL(importedFile);
+            reader.readAsDataURL(importedFile);
         }
-        const justadded = document.querySelector(`#${title}`);
-        justadded.addEventListener('change', () => {
-            let addedLayerElementValue = justadded.value;
-            addedLayerGroup.getLayers().forEach((element, index, array) => {
-                let addedLayerTitle = element.get('title');
-                element.setVisible(addedLayerTitle === addedLayerElementValue);
-                layerschecked = addedLayerElementValue;
+        else if(importedFile.name.substr(importedFile.name.length-3) == 'zip') {
+            const reader = new FileReader();
+            reader.onload = function() {
+                shp(reader.result).then(function(geojson) {
+                    const vector = new ol.layer.Vector({
+                        title: title,
+                        visible: false,
+                        source: new ol.source.Vector({
+                            features: new ol.format.GeoJSON().readFeatures(geojson, {featureProjection: 'EPSG:3857'})
+                        })
+                    });
+                    addedLayerGroup.getLayers().insertAt(0, vector);
+                })
+            }
+            reader.readAsArrayBuffer(importedFile);
+        }
+
+        const addedLayerElements = document.querySelectorAll('.addedlayer');
+        addedLayerElements.forEach((addedLayerElement) => {
+            addedLayerElement.addEventListener('change', () => {
+                let addedLayerElementValue = addedLayerElement.value;
+                addedLayerGroup.getLayers().forEach((element, index, array) => {
+                    let addedLayerTitle = element.get('title');
+                    element.setVisible(addedLayerTitle === addedLayerElementValue);
+                    layerschecked = addedLayerElementValue;
+                })
             })
-        })
+        });
+
+        // const justadded = document.querySelector(`#${title}`);
+        // justadded.addEventListener('change', () => {
+        //     let addedLayerElementValue = justadded.value;
+        //     addedLayerGroup.getLayers().forEach((element, index, array) => {
+        //         let addedLayerTitle = element.get('title');
+        //         element.setVisible(addedLayerTitle === addedLayerElementValue);
+        //         layerschecked = addedLayerElementValue;
+        //         console.log(layerschecked);
+        //     })
+        // })
         datalayerbtn.classList.remove('hidden')
         titlelayer.classList.add('hidden')
         addfile.classList.add('hidden');
