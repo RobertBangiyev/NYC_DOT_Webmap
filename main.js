@@ -5,6 +5,7 @@
             center: [-8236575.792110519, 4973235.140319245],
             zoom: 5,
             minZoom: 4,
+            maxZoom: 18,
             extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
         }),
         target: 'js-map'
@@ -252,7 +253,7 @@
 
     // Instantiate with some options and add the Control
     const geocoder = new Geocoder('nominatim', {
-      provider: 'photon',
+      provider: 'osm',
       targetType: 'glass-button',
       lang: 'en',
       placeholder: 'Search for ...',
