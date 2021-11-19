@@ -116,33 +116,27 @@ function init() {
     map.addLayer(basedLayerGroup);
     map.addLayer(addedLayerGroup);
 
-    let whichChecked = 'OSMStandard';
-    baseLayerElements.forEach((baseLayerElement) => {
-        baseLayerElement.addEventListener('change', () => {
-            let baseLayerElementValue = baseLayerElement.value;
-            baseLayerGroup.getLayers().forEach((element, index, array) => {
-                let baseLayerTitle = element.get('title');
-                element.setVisible(baseLayerTitle === baseLayerElementValue);
-                if(baseLayerTitle === baseLayerElementValue) {
-                    whichChecked = baseLayerElementValue;
-                }
+    function handleSelect(whichChecked, baseElements, layerGroup, special=false) {
+        baseElements.forEach((baseLayerElement) => {
+            baseLayerElement.addEventListener('change', () => {
+                let baseLayerElementValue = baseLayerElement.value;
+                layerGroup.getLayers().forEach((element, index, array) => {
+                    let baseLayerTitle = element.get('title');
+                    element.setVisible(baseLayerTitle === baseLayerElementValue);
+                    if(baseLayerTitle === baseLayerElementValue) {
+                        whichChecked = baseLayerElementValue
+                        console.log("reached here");
+                    }
+                })
             })
-        })
-    });
+        });
+    }
+
+    let whichChecked = 'OSMStandard';
+    handleSelect(whichChecked, baseLayerElements, baseLayerGroup);
 
     let whichCheckedLayers = '';
-    basedLayerElements.forEach((basedLayerElement) => {
-        basedLayerElement.addEventListener('change', () => {
-            let basedLayerElementValue = basedLayerElement.value;
-            basedLayerGroup.getLayers().forEach((element, index, array) => {
-                let basedLayerTitle = element.get('title');
-                element.setVisible(basedLayerTitle === basedLayerElementValue);
-                if(basedLayerTitle === basedLayerElementValue) {
-                    whichCheckedLayers = basedLayerElementValue;
-                }
-            })
-        })
-    });
+    handleSelect(whichCheckedLayers, basedLayerElements, basedLayerGroup);
 
     let currentZoom = map.getView().getZoom();
     map.on('moveend', (e) => {
@@ -168,6 +162,7 @@ function init() {
     const added = document.querySelector('#added');
     const addlayerbtn = document.querySelector('#addlayer');
     const addselectedbtn = document.querySelector('#addselected');
+    const cancelbtn = document.querySelector("#cancel");
 
     addlayerbtn.addEventListener('click', function(e) {
         const parser = new ol.format.WMSCapabilities();
@@ -186,7 +181,17 @@ function init() {
             }
             addlayerbtn.classList.add('hidden');
             addselectedbtn.classList.remove('hidden');
+            cancelbtn.classList.remove('hidden');
         });
+    });
+
+    cancelbtn.addEventListener('click', (e) => {
+        addlayerbtn.classList.remove('hidden');
+        addselectedbtn.classList.add('hidden');
+        cancelbtn.classList.add('hidden');
+        while(additional.firstChild) {
+            additional.removeChild(additional.firstChild);
+        }
     });
 
     addselectedbtn.addEventListener('click', function(e) {
@@ -215,6 +220,7 @@ function init() {
                 }
                 addlayerbtn.classList.remove('hidden');
                 addselectedbtn.classList.add('hidden');
+                cancelbtn.classList.add('hidden');
                 while(additional.firstChild) {
                     additional.removeChild(additional.firstChild);
                 }
@@ -304,16 +310,6 @@ function init() {
             })
         });
 
-        // const justadded = document.querySelector(`#${title}`);
-        // justadded.addEventListener('change', () => {
-        //     let addedLayerElementValue = justadded.value;
-        //     addedLayerGroup.getLayers().forEach((element, index, array) => {
-        //         let addedLayerTitle = element.get('title');
-        //         element.setVisible(addedLayerTitle === addedLayerElementValue);
-        //         layerschecked = addedLayerElementValue;
-        //         console.log(layerschecked);
-        //     })
-        // })
         datalayerbtn.classList.remove('hidden')
         titlelayer.classList.add('hidden')
         addfile.classList.add('hidden');
