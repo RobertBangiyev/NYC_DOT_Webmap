@@ -1,6 +1,5 @@
-window.onload = init;
-
-function init() {
+// window.onload = init;
+// function init() {
     const map = new ol.Map({
         view: new ol.View({
             center: [-8236575.792110519, 4973235.140319245],
@@ -106,8 +105,6 @@ function init() {
     const basedLayerGroup = new ol.layer.Group({
         layers: [nyclayer, randomlayer, cafelayer]
     });
-
-    console.log(basedLayerGroup.getLayers());
 
     const addedLayerGroup = new ol.layer.Group({
         layer: []
@@ -250,6 +247,37 @@ function init() {
     const titlelayer = document.querySelector("#titlelayer")
     const adddatalayerbtn = document.querySelector("#addpicked")
 
+    //GEOCODER
+    var popup = new ol.Overlay.Popup();
+
+    // Instantiate with some options and add the Control
+    const geocoder = new Geocoder('nominatim', {
+      provider: 'photon',
+      targetType: 'glass-button',
+      lang: 'en',
+      placeholder: 'Search for ...',
+      limit: 5,
+      keepOpen: false,
+    });
+  
+    map.addControl(geocoder);
+    map.addOverlay(popup);
+  
+    // Listen when an address is chosen
+    geocoder.on('addresschosen', (evt) => {
+      window.setTimeout(() => {
+        popup.show(evt.coordinate, evt.address.formatted);
+      }, 3000);
+    });
+
+    datalayerbtn.addEventListener('click', () => {
+        datalayerbtn.classList.add('hidden')
+        titlelayer.classList.remove('hidden')
+        addfile.classList.remove('hidden');
+        adddatalayerbtn.classList.remove('hidden');
+    })
+
+
     datalayerbtn.addEventListener('click', () => {
         datalayerbtn.classList.add('hidden')
         titlelayer.classList.remove('hidden')
@@ -297,6 +325,15 @@ function init() {
             }
             reader.readAsArrayBuffer(importedFile);
         }
+        else if(importedFile.name.substr(importedFile.name.length-3) == 'csv') {
+            const reader = new FileReader();
+            reader.onload = function() {
+                console.log(reader.result);
+                //TODO
+                
+            }
+            reader.readAsText(importedFile);
+        }
 
         const addedLayerElements = document.querySelectorAll('.addedlayer');
         addedLayerElements.forEach((addedLayerElement) => {
@@ -317,4 +354,4 @@ function init() {
         titlelayer.value = "";
         addfile.value = "";
     })
-};
+// };
