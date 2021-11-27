@@ -5,6 +5,7 @@
     <title>OpenLayers WebMap</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="./libs/v6.9.0-dist/ol.css">
+    <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.8.3/dist/ol-layerswitcher.css" />
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/css/ol.css"
@@ -16,21 +17,22 @@
     <div class="grid-container">
         <div class="grid-1">
             <div class="sidebar">
-                <h2>Base Maps</h2>
-                <!-- <input type="radio" name='baseLayerRadioButton' value='OSMStandard' checked>OSM Standard<br> -->
-                <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMStandard'>OSM Standard<br>
-                <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMHumanitarian'>OSM Humanitarian<br>
-                <input type="radio" class='basemap' name='baseLayerRadioButton' value='StamenTerrain' checked>Stamen Terrain<br>
-                <input type="radio" class='basemap' name='baseLayerRadioButton' value='randomArcGIS'>World Topographical<br>
-                <input type="radio" class='basemap' name='baseLayerRadioButton' value='USATopo'>USA Topographical<br>
+                <div id="layerlist">
+                    <h2>Base Maps</h2>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMStandard'>OSM Standard<br>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMHumanitarian'>OSM Humanitarian<br>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='StamenTerrain' checked>Stamen Terrain<br>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='randomArcGIS'>World Topographical<br>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='USATopo'>USA Topographical<br>
 
-                <h2>Base Map Layers</h2>
-                <input type="radio" class='baselayer' name='basedLayerRadioButton' value='Streets and Highways Reconstruction'>Streets and Highways Reconstruction<br>
-                <input type="radio" class='baselayer' name='basedLayerRadioButton' value='Wetlands'>Wetlands<br>
-                <input type="radio" class='baselayer' name='basedLayerRadioButton' value='Sidewalk Cafe Regulations'>Sidewalk Cafe Regulations<br>
-                <h2>Additional Layers</h2>
-                <div id="added">
-                    
+                    <h2>Base Map Layers</h2>
+                    <input type="radio" id="street_and_highway" class='baselayer' name='basedLayerRadioButton' value='street_and_highway'>Streets and Highways Reconstruction<br>
+                    <input type="radio" id="nyc_wetlands" class='baselayer' name='basedLayerRadioButton' value='nyc_wetlands'>Wetlands<br>
+                    <input type="radio" id="sidewalk_cafe" class='baselayer' name='basedLayerRadioButton' value='sidewalk_cafe'>Sidewalk Cafe Regulations<br>
+                    <h2>Additional Layers</h2>
+                    <div id="added">
+                        
+                    </div>
                 </div>
                 <div id="additional">
                     
@@ -43,24 +45,30 @@
 
                 <button id="datalayer">Add layer from data</button>
                 <input type="file" id="myFile" class="hidden" accept=".geojson, .shp, .csv, .zip">
-                <!-- <label for="titlelayer" class=>Name of Layer: </label> -->
                 <input type="text" class="hidden" id="titlelayer" name="titlelayer" placeholder="Enter name of Layer">
                 <button id="addpicked" class="hidden">Add</button>
-                <!-- <div id="dataadd">
-
-                </div> -->
+                
             </div>
-            <!-- <p id="log"></p> -->
         </div>
         <div class="grid-2">
             <div id="js-map" class="map"></div>
+            <form class="form-inline">
+                <label for="type">Measurement type &nbsp;</label>
+                <select id="type">
+                  <option value="none">Select measure type</option>
+                  <option value="length">Length (LineString)</option>
+                  <option value="area">Area (Polygon)</option>
+                </select>
+              </form>
+            <div id="info"></div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/build/ol.js"></script>
+    <script src="libs/v6.9.0-dist/ol.js"></script>
+    <script src="https://unpkg.com/ol-layerswitcher@3.8.3"></script>
+    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
     <script src="https://unpkg.com/ol-popup@4.0.0/dist/ol-popup.js"></script>
     <script src="https://unpkg.com/ol-geocoder"></script>
     <script src="./main.js"></script>
-    <script src="libs/v6.9.0-dist/ol.js"></script>
-    <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 </body>
 </html>
