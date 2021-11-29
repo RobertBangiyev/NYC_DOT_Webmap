@@ -26,9 +26,9 @@
                     <input type="radio" class='basemap' name='baseLayerRadioButton' value='USATopo'>USA Topographical<br>
 
                     <h2>Base Map Layers</h2>
-                    <input type="radio" id="street_and_highway" class='baselayer' name='basedLayerRadioButton' value='street_and_highway'>Streets and Highways Reconstruction<br>
-                    <input type="radio" id="nyc_wetlands" class='baselayer' name='basedLayerRadioButton' value='nyc_wetlands'>Wetlands<br>
-                    <input type="radio" id="sidewalk_cafe" class='baselayer' name='basedLayerRadioButton' value='sidewalk_cafe'>Sidewalk Cafe Regulations<br>
+                    <input type="radio" id="street_and_highway" class='baselayer layer' name='basedLayerRadioButton' value='street_and_highway'>Streets and Highways Reconstruction<br>
+                    <input type="radio" id="nyc_wetlands" class='baselayer layer' name='basedLayerRadioButton' value='nyc_wetlands'>Wetlands<br>
+                    <input type="radio" id="sidewalk_cafe" class='baselayer layer' name='basedLayerRadioButton' value='sidewalk_cafe'>Sidewalk Cafe Regulations<br>
                     <h2>Additional Layers</h2>
                     <div id="added">
                         
@@ -47,6 +47,33 @@
                 <input type="file" id="myFile" class="hidden" accept=".geojson, .shp, .csv, .zip">
                 <input type="text" class="hidden" id="titlelayer" name="titlelayer" placeholder="Enter name of Layer">
                 <button id="addpicked" class="hidden">Add</button>
+
+                <button id="allow-query">Querying</button>
+                <div id="form" class="queryhidden querydiv">
+                    <label for="layer">Layer</label>
+                    <select class="select-layer" id="layer" name="layer">
+                        <option value="">Select Layer</option>
+                    </select>
+                    <br>
+                    <label for="attributes">Attribute</label>
+                    <select class="select-attribute" id="attributes" name="attributes">
+                        <option value="">Select Attributes</option>
+                    </select>
+                    <br>
+                    <label for="operator">Operator</label>
+                    <select class="select-operator" id="operator" name="operator">
+                        <option value="">Select operator</option>
+                    </select>
+                    <br>
+                  
+                    <label for="value">Value</label>
+                    <input type="text" class="" id="value" name="value">
+                    <br>
+                    <div id="querybuttons">
+                        <button class="load-query">Load Query</button>
+                        <button id="hidequery">Hide</button>
+                    </div>
+                </div>
                 
             </div>
         </div>

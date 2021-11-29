@@ -265,6 +265,8 @@
         }
     });
 
+    let allAvailableLayers = document.querySelectorAll('.layer');
+
     addselectedbtn.addEventListener('click', function(e) {
         const checks = document.querySelectorAll('.newadds');
         console.log(checks);
@@ -285,12 +287,15 @@
                 allLayerGroup.getLayers().insertAt(0, newlayer);
                 // console.log(addedLayerGroup.getLayers());
                 addedlayers.push(e.id);
-                let addthis = `<input type="radio" class='addedlayer' name='addedLayerRadio' id='${e.name}' value='${e.id}'>${e.id}<br>`;
+                let addthis = `<input type="radio" class='addedlayer layer' name='addedLayerRadio' id='${e.name}' value='${e.id}'>${e.id}<br>`;
                 added.innerHTML += addthis;
                 if(layerschecked != "") {
                     document.getElementById(`${layerschecked}`).checked = true;
                     console.log("got here");
                 }
+                allAvailableLayers = document.querySelectorAll('.layer');
+                console.log(allAvailableLayers);
+                layerListen();
                 addlayerbtn.classList.remove('hidden');
                 addselectedbtn.classList.add('hidden');
                 cancelbtn.classList.add('hidden');
@@ -364,7 +369,7 @@
 
     adddatalayerbtn.addEventListener('click', () => {
         const title = titlelayer.value
-        let addthis = `<input type="radio" class='addedlayer' name='addedLayerRadio' id='${title}' value='${title}'>${title}<br>`;
+        let addthis = `<input type="radio" class='addedlayer layer' name='addedLayerRadio' id='${title}' value='${title}'>${title}<br>`;
         added.innerHTML += addthis;
         if(layerschecked != "") {
             document.getElementById(`${layerschecked}`).checked = true;
@@ -698,4 +703,181 @@
       };
       
       addInteraction();
-// };
+
+function addLayerNames() {
+    const parser = new ol.format.WMSCapabilities();
+    fetch('http://localhost:8080/geoserver/wms?service=wms&version=1.1.1&request=GetCapabilities')
+    .then(function (response) {
+        return response.text();
+    })
+    .then(function (text) {
+        const result = parser.read(text);
+        const a = result['Capability']['Layer']['Layer']
+        removeOptions(selectLayer);
+        let newOpt = document.createElement('option');
+        newOpt.value = "Select Layer";
+        newOpt.innerHTML = "Select Layer";
+        selectLayer.appendChild(newOpt);
+        for(let i = 0; i < a['length']; i++) {
+            if(addedlayers.includes(a[i].Title)) {
+                for(let j = 0; j < allLayerGroup.getLayers().get('length'); j++) {
+                    // console.log(allLayerGroup.getLayers().item(j));
+                    // console.log(allLayerGroup.getLayers().item(j).get('title'));
+                    // console.log((a[i].Name).split(":")[1]);
+                    if(allLayerGroup.getLayers().item(j).getVisible() && ((allLayerGroup.getLayers().item(j).get('title') == (a[i].Name).split(":")[1]) || allLayerGroup.getLayers().item(j).get('title') == a[i].Name)) {
+                        const newOpt = document.createElement('option');
+                        newOpt.value = a[i].Name;
+                        newOpt.innerHTML = a[i].Title;
+                        selectLayer.appendChild(newOpt);
+                    }
+                }
+            }
+        }
+    });
+}
+
+function addLayerAttributes() {
+    fetch("http://localhost:8080/geoserver/wfs?service=WFS&request=DescribeFeatureType&version=1.1.0&typeName=" + selectLayer.value + "&outputFormat=application/json", {
+        method: 'GET'
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(text) {
+        removeOptions(selectAttribute);
+        let newOpt = document.createElement('option');
+        newOpt.value = "Select Attribute";
+        newOpt.innerHTML = "Select Attribute";
+        selectAttribute.appendChild(newOpt);
+        console.log(text['featureTypes'][0]['properties']);
+        allFeatures = text['featureTypes'][0]['properties'];
+        totalfeatures = text['featureTypes'][0]['properties'].length;
+        for(let i = 0; i < totalfeatures; i++) {
+            console.log(allFeatures[i]['name']);
+            featureName = allFeatures[i]['name'];
+            if(featureName != 'the_geom' && featureName != 'geom') {
+                let newOpt = document.createElement('option');
+                newOpt.value = allFeatures[i]['type'];
+                newOpt.innerHTML = featureName;
+                selectAttribute.appendChild(newOpt);
+            }
+        }
+    })
+}
+
+function addOperator() {
+    removeOptions(selectOperator);
+    let newOpt = document.createElement('option');
+    newOpt.value = "Select Operator";
+    newOpt.innerHTML = "Select Operator";
+    selectOperator.appendChild(newOpt);
+    const featureType = selectAttribute.value;
+    console.log(featureType);
+    if(featureType == 'xsd:short' || featureType == 'xsd:int' || featureType == 'xsd:double' || featureType == 'xsd:number') {
+        let newOpt = document.createElement('option');
+        newOpt.value = "<";
+        newOpt.innerHTML = "<";
+        selectOperator.appendChild(newOpt);
+        let anotherOpt = document.createElement('option');
+        anotherOpt.value = ">";
+        anotherOpt.innerHTML = ">";
+        selectOperator.appendChild(anotherOpt);
+        let moreOpt = document.createElement('option');
+        moreOpt.value = "=";
+        moreOpt.innerHTML = "=";
+        selectOperator.appendChild(moreOpt);
+
+    }
+    else {
+        let moreOpt = document.createElement('option');
+        moreOpt.value = "ILike";
+        moreOpt.innerHTML = "Like";
+        selectOperator.appendChild(moreOpt);
+    }
+}
+
+layerListen()
+function layerListen() {
+    allAvailableLayers.forEach((element) => {
+        element.addEventListener('change', addLayerNames)
+    });
+}
+
+const queryReveal = document.querySelector('#allow-query');
+const queryDiv = document.querySelector('.querydiv');
+const hideQuery = document.querySelector('#hidequery');
+const selectLayer = document.querySelector('.select-layer');
+const selectAttribute = document.querySelector('.select-attribute');
+const selectOperator = document.querySelector('.select-operator');
+const loadQuery = document.querySelector('.load-query');
+const queryVal = document.querySelector('#value');
+queryReveal.addEventListener('click', () => {
+    queryDiv.classList.remove('queryhidden');
+})
+hideQuery.addEventListener('click', () => {
+    queryDiv.classList.add('queryhidden');
+})
+
+function removeOptions(selectElement) {
+    let optionLen = selectElement.options.length - 1;
+    for(let i = optionLen; i >= 0; i--) {
+       selectElement.remove(i);
+    }
+}
+
+selectLayer.addEventListener('change', addLayerAttributes);
+selectAttribute.addEventListener('change', addOperator);
+
+function query() {
+    let layerVal = selectLayer.value;
+    let attributeVal = selectAttribute.options[selectAttribute.selectedIndex].text;
+    let operatorVal = selectOperator.value;
+    let inputVal = queryVal.value;
+    console.log(layerVal + " " + attributeVal + " " + operatorVal + " " + inputVal);
+    if(operatorVal == 'ILike') {
+        inputVal = ""+inputVal+"%25";
+        console.log(inputVal);
+    }
+    let url = "http://localhost:8080/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName="+layerVal+"&CQL_FILTER="+attributeVal+"+"+operatorVal+"+'"+inputVal+"'&outputFormat=application/json";
+    console.log(url);
+    fetch(url, {
+        method: "GET"
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(text) {
+        let features = text['features'];
+        let columns = [];
+        const table = document.createElement('table');
+        table.style.border = '1px solid black';
+        for(let i = 0; i < features.length; i++) {
+            for(const column in features[i]['properties']) {
+                if(columns.indexOf(column) == -1) {
+                    columns.push(column);
+                }
+            }
+        }
+        let tableRow = table.insertRow(-1);
+        for(let i = 0; i < columns.length; i++) {
+            const tableHeader = document.createElement('th');
+            tableHeader.innerHTML = columns[i];
+            tableRow.appendChild(tableHeader);
+        }
+        for(let i = 0; i < features.length; i++) {
+            let tableRow = table.insertRow(-1);
+            for(let j = 0; j < columns.length; j++) {
+                const tableCell = tableRow.insertCell(-1);
+                tableCell.style.border = '1px solid black';
+                tableCell.innerHTML = features[i]['properties'][columns[j]];
+            }
+        }
+        console.log(table);
+        const infoPlace = document.querySelector('#info')
+        infoPlace.innerHTML = "";
+        theMap.classList.add('space-map');
+        infoPlace.appendChild(table);
+    })
+}
+
+loadQuery.addEventListener('click', query);

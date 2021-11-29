@@ -15,6 +15,8 @@ body {
 
 .sidebar {
     margin-left: 15px;
+    max-height: 100vh;
+    overflow: auto;
 }
 
 #addlayer {
@@ -41,14 +43,9 @@ h2 {
 }
 
 #temphidden {
-    width: 70%;
+    text-align: center;
     margin: 10px auto;
 }
-
-/* #addselected {
-    display: block;
-    margin: 10px auto;
-} */
 
 #datalayer {
     margin:0 auto;
@@ -94,18 +91,18 @@ h2 {
     font-size: 12px;
     cursor: default;
     user-select: none;
-  }
-  .ol-tooltip-measure {
+}
+.ol-tooltip-measure {
     opacity: 1;
     font-weight: bold;
-  }
-  .ol-tooltip-static {
+}
+.ol-tooltip-static {
     background-color: #ffcc33;
     color: black;
     border: 1px solid white;
-  }
-  .ol-tooltip-measure:before,
-  .ol-tooltip-static:before {
+}
+.ol-tooltip-measure:before,
+.ol-tooltip-static:before {
     border-top: 6px solid rgba(0, 0, 0, 0.5);
     border-right: 6px solid transparent;
     border-left: 6px solid transparent;
@@ -114,18 +111,35 @@ h2 {
     bottom: -6px;
     margin-left: -7px;
     left: 50%;
-  }
-  .ol-tooltip-static:before {
+}
+.ol-tooltip-static:before {
     border-top-color: #ffcc33;
-  }
+}
 
-  #info {
+#info {
     max-height: 100px;
     width: 100%;
     overflow: auto;
-  }
+}
 
-  #layerlist {
-      max-height: 390px;
-      overflow: auto;
-  }
+#layerlist {
+    max-height: 390px;
+    overflow: auto;
+}
+
+#allow-query {
+    margin:10px auto;
+    display:block;
+}
+
+.queryhidden {
+    display: none !important;
+}
+
+#querybuttons {
+    text-align: center;
+}
+
+#layer {
+    max-width: 19vw;
+}
