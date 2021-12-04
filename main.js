@@ -1,17 +1,28 @@
 // window.onload = init;
 // function init() {
+
+    proj4.defs("EPSG:2263","+proj=lcc +lat_1=41.03333333333333 +lat_2=40.66666666666666 +lat_0=40.16666666666666 +lon_0=-74 +x_0=300000.0000000001 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=us-ft +no_defs");
+    ol.proj.proj4.register(proj4);
+    const liProjection = ol.proj.get("EPSG:2263");
+
     const map = new ol.Map({
         view: new ol.View({
-            center: [-8236575.792110519, 4973235.140319245],
+            center: [992527.6955610153, 196698.67145527632],
             zoom: 5,
             minZoom: 4,
             maxZoom: 18,
-            extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
+            projection: liProjection,
+            extent: [850024.8342633599, 100063.57546333139, 1109052.3210164765, 299395.97671042057]
+            // extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
         }),
         target: 'js-map'
     })
+
     const theMap = document.querySelector('#js-map');
     map.on('click', getInfoBase);
+    map.on('click', (e) => {
+        console.log(e.coordinate)
+    })
     map.addControl(new ol.control.ZoomSlider());
 
     // let mousePosition = new ol.control.MousePosition();
@@ -170,7 +181,7 @@
                     crossOrigin: 'anonymous'
                 });
                 url[i] = wmsSource[i].getFeatureInfoUrl(
-                    evt.coordinate, viewResolution, 'EPSG:3857',
+                    evt.coordinate, viewResolution, liProjection,
                     {'INFO_FORMAT': 'text/html'});
                 if (url[i]) {
                     fetch(url[i])
@@ -399,7 +410,7 @@
                         title: title,
                         visible: false,
                         source: new ol.source.Vector({
-                            features: new ol.format.GeoJSON().readFeatures(geojson, {featureProjection: 'EPSG:3857'})
+                            features: new ol.format.GeoJSON().readFeatures(geojson, {featureProjection: liProjection})
                         })
                     });
                     addedLayerGroup.getLayers().insertAt(0, vector);
@@ -554,12 +565,12 @@
        * @return {string} The formatted length.
        */
       const formatLength = function (line) {
-        const length = ol.sphere.getLength(line);
+        const length = ol.sphere.getLength(line, {projection: liProjection});
         let output;
         if (length > 100) {
-          output = Math.round((length / 1000) * 100) / 100 + ' ' + 'km';
+          output = (Math.round((length / 1000) * 100) / 100) * 0.621371 + ' ' + 'mi';
         } else {
-          output = Math.round(length * 100) / 100 + ' ' + 'm';
+          output = (Math.round(length * 100) / 100) * 3.280839895  + ' ' + 'ft';
         }
         return output;
       };
@@ -570,12 +581,12 @@
        * @return {string} Formatted area.
        */
        const formatArea = function (polygon) {
-        const area = ol.sphere.getArea(polygon);
+        const area = ol.sphere.getArea(polygon, {projection: liProjection});
         let output;
         if (area > 10000) {
-          output = Math.round((area / 1000000) * 100) / 100 + ' ' + 'km<sup>2</sup>';
+          output = (Math.round((area / 1000000) * 100) / 100) * 0.386102 + ' ' + 'mi<sup>2</sup>';
         } else {
-          output = Math.round(area * 100) / 100 + ' ' + 'm<sup>2</sup>';
+          output = (Math.round(area * 100) / 100) * 10.7639 + ' ' + 'ft<sup>2</sup>';
         }
         return output;
       };
@@ -721,9 +732,6 @@ function addLayerNames() {
         for(let i = 0; i < a['length']; i++) {
             if(addedlayers.includes(a[i].Title)) {
                 for(let j = 0; j < allLayerGroup.getLayers().get('length'); j++) {
-                    // console.log(allLayerGroup.getLayers().item(j));
-                    // console.log(allLayerGroup.getLayers().item(j).get('title'));
-                    // console.log((a[i].Name).split(":")[1]);
                     if(allLayerGroup.getLayers().item(j).getVisible() && ((allLayerGroup.getLayers().item(j).get('title') == (a[i].Name).split(":")[1]) || allLayerGroup.getLayers().item(j).get('title') == a[i].Name)) {
                         const newOpt = document.createElement('option');
                         newOpt.value = a[i].Name;
@@ -796,10 +804,46 @@ function addOperator() {
     }
 }
 
-layerListen()
+function addSearchLayerNames() {
+    const parser = new ol.format.WMSCapabilities();
+    fetch('http://localhost:8080/geoserver/wms?service=wms&version=1.1.1&request=GetCapabilities')
+    .then(function (response) {
+        return response.text();
+    })
+    .then(function (text) {
+        const result = parser.read(text);
+        const a = result['Capability']['Layer']['Layer']
+        removeOptions(selectSearchLayer);
+        let newOpt = document.createElement('option');
+        newOpt.value = "Select Layer";
+        newOpt.innerHTML = "Select Layer";
+        selectSearchLayer.appendChild(newOpt);
+        for(let i = 0; i < a['length']; i++) {
+            if(addedlayers.includes(a[i].Title)) {
+                for(let j = 0; j < allLayerGroup.getLayers().get('length'); j++) {
+                    if(allLayerGroup.getLayers().item(j).getVisible() && ((allLayerGroup.getLayers().item(j).get('title') == (a[i].Name).split(":")[1]) || allLayerGroup.getLayers().item(j).get('title') == a[i].Name)) {
+                        const newOpt = document.createElement('option');
+                        newOpt.value = a[i].Name;
+                        newOpt.innerHTML = a[i].Title;
+                        selectSearchLayer.appendChild(newOpt);
+                    }
+                }
+            }
+        }
+    });
+}
+
+layerListen();
 function layerListen() {
     allAvailableLayers.forEach((element) => {
         element.addEventListener('change', addLayerNames)
+    });
+}
+
+layerSearchListen();
+function layerSearchListen() {
+    allAvailableLayers.forEach(element => {
+        element.addEventListener('change', addSearchLayerNames)
     });
 }
 
@@ -811,11 +855,24 @@ const selectAttribute = document.querySelector('.select-attribute');
 const selectOperator = document.querySelector('.select-operator');
 const loadQuery = document.querySelector('.load-query');
 const queryVal = document.querySelector('#value');
+
+const searchReveal = document.querySelector('#allow-search');
+const searchDiv = document.querySelector('.searchdiv');
+const hideSearch = document.querySelector('#hidesearch');
+const selectSearchLayer = document.querySelector('.select-searchlayer');
+
 queryReveal.addEventListener('click', () => {
     queryDiv.classList.remove('queryhidden');
 })
 hideQuery.addEventListener('click', () => {
     queryDiv.classList.add('queryhidden');
+})
+
+searchReveal.addEventListener('click', () => {
+    searchDiv.classList.remove('searchhidden');
+})
+hideSearch.addEventListener('click', () => {
+    searchDiv.classList.add('searchhidden');
 })
 
 function removeOptions(selectElement) {

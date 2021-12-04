@@ -73,7 +73,7 @@ h2 {
 }
 
 #js-map {
-    height: 95%;
+    height: 93%;
 }
 
 .space-map {
@@ -142,4 +142,48 @@ h2 {
 
 #layer {
     max-width: 19vw;
+}
+
+#allow-search {
+    margin:10px auto;
+    display:block;
+}
+
+.searchhidden {
+    display: none !important;
+}
+
+#searchbuttons {
+    text-align: center;
+}
+
+#search-layer {
+    max-width: 19vw;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+  
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 150px;
+    background-color: black;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+  
+    /* Position the tooltip */
+    position: absolute;
+    z-index: 1;
+}
+  
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+#info {
+    width: 15px;
 }

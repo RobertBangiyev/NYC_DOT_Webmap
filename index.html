@@ -74,6 +74,27 @@
                         <button id="hidequery">Hide</button>
                     </div>
                 </div>
+
+                <button id="allow-search">Searching</button>
+                <div id="searchform" class="searchhidden searchdiv">
+                    <label for="search=layer">Layer</label>
+                    <select class="select-searchlayer" id="search-layer" name="search-layer">
+                        <option value="">Select Layer</option>
+                    </select>
+                    <br>
+                    <label for="shapes">Shape</label>
+                    <select class="select-shape" id="shapes" name="shapes">
+                        <option value="select">Select Shape</option>
+                        <option value="Square">Square</option>
+                        <option value="circle">Circle</option>
+                    </select>
+                    <br>
+
+                    <div id="searchbuttons">
+                        <button id="hidesearch">Hide</button>
+                    </div>
+                </div>
+                
                 
             </div>
         </div>
@@ -86,6 +107,10 @@
                   <option value="length">Length (LineString)</option>
                   <option value="area">Area (Polygon)</option>
                 </select>
+                <div class="tooltip">
+                    <img id="info" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Infobox_info_icon.svg/1024px-Infobox_info_icon.svg.png" alt="info">
+                    <span class="tooltiptext">Projection: EPSG:2263 <br> Unit system: Imperial</span>
+                  </div>
               </form>
             <div id="info"></div>
         </div>
@@ -95,6 +120,10 @@
     <script src="https://unpkg.com/ol-layerswitcher@3.8.3"></script>
     <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
     <script src="https://unpkg.com/ol-popup@4.0.0/dist/ol-popup.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js" integrity="sha512-MMmVaQGDVI3Wouc5zT5G7k/snN9gPqquIhZsHgIIHVDlRgYTYGxrwu6w482iIhAq8n5R6+pcBgpGgxFFBz7rZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4-src.js" integrity="sha512-v9fKB/Tdskpid8kkFcCde7j8nyykKK9fBAZIU8pzTuMIOMJYccsutTxn8qUS/p/32FG/ynVrsbj+dsaya/jNEg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4-src.min.js" integrity="sha512-Z2VLHCL1q+xjHZy2RIqdyzBK/SixCCXitZm/qCngIrVeAi0FBP/PlVeZQ2GxrL8tpPCxQB0Tmz02/e3JK5/HKg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.min.js" integrity="sha512-Nwp3XMQKRvqr376bCa50Hs4X4z5zbsefo63QLa62poTx5o/GhYgjnToCoBZk7bxjeP2y84oEgKNUrpK2+2Czyg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://unpkg.com/ol-geocoder"></script>
     <script src="./main.js"></script>
 </body>
