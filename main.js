@@ -727,10 +727,12 @@ function addLayerNames() {
         const result = parser.read(text);
         const a = result['Capability']['Layer']['Layer']
         removeOptions(selectLayer);
+        removeOptions(selectSearchLayer);
         let newOpt = document.createElement('option');
         newOpt.value = "Select Layer";
         newOpt.innerHTML = "Select Layer";
-        selectLayer.appendChild(newOpt);
+        selectLayer.appendChild(newOpt.cloneNode(true));
+        selectSearchLayer.appendChild(newOpt.cloneNode(true));
         for(let i = 0; i < a['length']; i++) {
             if(addedlayers.includes(a[i].Title)) {
                 for(let j = 0; j < allLayerGroup.getLayers().get('length'); j++) {
@@ -738,7 +740,10 @@ function addLayerNames() {
                         const newOpt = document.createElement('option');
                         newOpt.value = a[i].Name;
                         newOpt.innerHTML = a[i].Title;
-                        selectLayer.appendChild(newOpt);
+                        selectLayer.appendChild(newOpt.cloneNode(true));
+                        console.log(selectLayer);
+                        console.log(newOpt);
+                        selectSearchLayer.appendChild(newOpt.cloneNode(true));
                     }
                 }
             }
@@ -806,46 +811,10 @@ function addOperator() {
     }
 }
 
-function addSearchLayerNames() {
-    const parser = new ol.format.WMSCapabilities();
-    fetch('http://localhost:8080/geoserver/wms?service=wms&version=1.1.1&request=GetCapabilities')
-    .then(function (response) {
-        return response.text();
-    })
-    .then(function (text) {
-        const result = parser.read(text);
-        const a = result['Capability']['Layer']['Layer']
-        removeOptions(selectSearchLayer);
-        let newOpt = document.createElement('option');
-        newOpt.value = "Select Layer";
-        newOpt.innerHTML = "Select Layer";
-        selectSearchLayer.appendChild(newOpt);
-        for(let i = 0; i < a['length']; i++) {
-            if(addedlayers.includes(a[i].Title)) {
-                for(let j = 0; j < allLayerGroup.getLayers().get('length'); j++) {
-                    if(allLayerGroup.getLayers().item(j).getVisible() && ((allLayerGroup.getLayers().item(j).get('title') == (a[i].Name).split(":")[1]) || allLayerGroup.getLayers().item(j).get('title') == a[i].Name)) {
-                        const newOpt = document.createElement('option');
-                        newOpt.value = a[i].Name;
-                        newOpt.innerHTML = a[i].Title;
-                        selectSearchLayer.appendChild(newOpt);
-                    }
-                }
-            }
-        }
-    });
-}
-
 layerListen();
 function layerListen() {
     allAvailableLayers.forEach((element) => {
-        element.addEventListener('change', addLayerNames)
-    });
-}
-
-layerSearchListen();
-function layerSearchListen() {
-    allAvailableLayers.forEach(element => {
-        element.addEventListener('change', addSearchLayerNames)
+        element.addEventListener('change', addLayerNames);
     });
 }
 
