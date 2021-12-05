@@ -7,11 +7,13 @@
 
     const map = new ol.Map({
         view: new ol.View({
+            // center: [-8236575.792110519, 4973235.140319245],
             center: [992527.6955610153, 196698.67145527632],
             zoom: 5,
             minZoom: 4,
             maxZoom: 18,
             projection: liProjection,
+            // extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
             extent: [850024.8342633599, 100063.57546333139, 1109052.3210164765, 299395.97671042057]
             // extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
         }),
@@ -21,7 +23,7 @@
     const theMap = document.querySelector('#js-map');
     map.on('click', getInfoBase);
     map.on('click', (e) => {
-        console.log(e.coordinate)
+        console.log(e.coordinate);
     })
     map.addControl(new ol.control.ZoomSlider());
 
@@ -450,28 +452,28 @@
 
     const raster = new ol.layer.Tile({
         source: new ol.source.OSM(),
-      });
+    });
       
-      const source = new ol.source.Vector();
+    const source = new ol.source.Vector();
       
-      const vector = new ol.layer.Vector({
+    const vector = new ol.layer.Vector({
         source: source,
         style: new ol.style.Style({
-          fill: new ol.style.Fill({
-            color: 'rgba(255, 255, 255, 0.2)',
-          }),
-          stroke: new ol.style.Stroke({
-            color: '#ffcc33',
-            width: 2,
-          }),
-          image: new ol.style.Circle({
-            radius: 7,
             fill: new ol.style.Fill({
-              color: '#ffcc33',
+            color: 'rgba(255, 255, 255, 0.2)',
             }),
-          }),
+            stroke: new ol.style.Stroke({
+                color: '#ffcc33',
+                width: 2,
+            }),
+            image: new ol.style.Circle({
+                radius: 7,
+                fill: new ol.style.Fill({
+                color: '#ffcc33',
+                }),
+            }),
         }),
-      });
+    });
       
       /**
        * Currently drawn feature.
@@ -938,3 +940,74 @@ function query() {
 }
 
 loadQuery.addEventListener('click', query);
+
+const sourced = new ol.source.Vector();
+const vectored = new ol.layer.Vector({
+    source: sourced
+});
+
+map.addLayer(vectored);
+const selectShape = document.querySelector('#shapes');
+
+let drawed;
+
+function addDrawing() {
+    let shapeVal = selectShape.value;
+    let geomFunc;
+    if(shapeVal != 'None') {
+        if(shapeVal === 'Box') {
+            shapeVal = 'Circle';
+            geomFunc = new ol.interaction.Draw.createBox();
+        }
+        if(shapeVal != 'None' && shapeVal != 'Select' && shapeVal != 'Clear') {
+            drawed = new ol.interaction.Draw({
+                source: sourced,
+                type: shapeVal,
+                geometryFunction: geomFunc
+            })
+        }
+        if(selectShape.value === 'Clear') {
+            map.removeInteraction(drawed);
+            vectored.getSource().clear();
+        } else if(selectShape.value != 'Clear' && selectShape.value != 'Select') {
+            map.addInteraction(drawed);
+            drawed.on('drawstart', (evt) => {
+                if(vectored) {
+                    vectored.getSource().clear();
+                }
+            });
+            drawed.on('drawend', (evt) => {
+                let feature = evt.feature;
+                // let coords = feature.getGeometry();
+                let coords = feature.getGeometry().transform('EPSG:2263', 'EPSG:4326');
+                console.log(coords);
+                let format = new ol.format.WKT();
+                if(selectShape.value === 'Circle') {
+                    coords = ol.geom.Polygon.circular(coords.getCenter(), coords.getRadius());
+                }
+                let something = format.writeGeometry(coords);
+                search(something);
+            })
+        }
+    }
+}
+
+selectShape.addEventListener('change', () => {
+    map.removeInteraction(drawed);
+    addDrawing();
+});
+
+function search(something) {
+    let layerVal = selectSearchLayer.options[selectSearchLayer.selectedIndex].value;
+    const url = "http://localhost:8080/geoserver/wfs?request=GetFeature&version=1.1.0&typeName="+layerVal+"&outputFormat=json&cql_filter=INTERSECTS(the_geom,"+something+")";
+    fetch(url, {
+        methid: "GET"
+    })
+    .then((response) => {
+        return response.json();
+    })
+    .then((text) => {
+        console.log(text);
+    })
+    console.log(url);
+}

@@ -175,7 +175,6 @@ h2 {
     border-radius: 6px;
     padding: 5px 0;
   
-    /* Position the tooltip */
     position: absolute;
     z-index: 1;
 }
@@ -184,6 +183,6 @@ h2 {
     visibility: visible;
 }
 
-#info {
+#epicinfo {
     width: 15px;
 }
