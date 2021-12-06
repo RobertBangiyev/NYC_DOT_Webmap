@@ -42,7 +42,8 @@
 
     const openStreetMapHumanitarian = new ol.layer.Tile({
         source: new ol.source.OSM({
-            url: "https://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+            url: "https://{a-c}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+            crossOrigin: "Anonymous",
         }),
         visible: false,
         title: "OSMHumanitarian"
@@ -53,7 +54,7 @@
             url: "https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg",
             attributions: `Map tiles by <a href="http://stamen.com">Stamen Design</a>, under <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a>. Data by <a href="http://openstreetmap.org">OpenStreetMap</a>, under <a href="http://www.openstreetmap.org/copyright">ODbL</a>.`
         }),
-        visible: true,
+        visible: false,
         title: "StamenTerrain"
     });
 
@@ -62,11 +63,12 @@
             attributions:
               'Tiles © <a href="https://services.arcgisonline.com/ArcGIS/' +
               'rest/services/World_Topo_Map/MapServer">ArcGIS</a>',
+            crossOrigin: "Anonymous",
             url:
               'https://server.arcgisonline.com/ArcGIS/rest/services/' +
               'World_Topo_Map/MapServer/tile/{z}/{y}/{x}',
           }),
-          visible: false,
+          visible: true,
           title: 'randomArcGIS'
     });
 
@@ -96,6 +98,7 @@
         visible: false,
         source: new ol.source.ImageWMS({
             url: "http://localhost:8080/geoserver/wms",
+            crossOrigin: "Anonymous",
             params: {'LAYERS': 'nyc:nyc_wetlands'},
             ratio: 1,
             serverType: 'geoserver'
@@ -106,6 +109,7 @@
         title: "street_and_highway",
         source: new ol.source.ImageWMS({
             url: "http://localhost:8080/geoserver/wms",
+            crossOrigin: "Anonymous",
             params: {'LAYERS': 'nyc:street_and_highway'},
             ratio: 1,
             serverType: 'geoserver'
@@ -118,6 +122,7 @@
         visible: false,
         source: new ol.source.ImageWMS({
             url: "http://localhost:8080/geoserver/wms",
+            crossOrigin: "Anonymous",
             params: {'LAYERS': 'nyc:sidewalk_cafe'},
             ratio: 1,
             serverType: 'geoserver'
@@ -180,7 +185,7 @@
                     url: 'http://localhost:8080/geoserver/wms',
                     params: {'LAYERS': layer_title[i]},
                     serverType: 'geoserver',
-                    crossOrigin: 'anonymous'
+                    crossOrigin: 'Anonymous'
                 });
                 url[i] = wmsSource[i].getFeatureInfoUrl(
                     evt.coordinate, viewResolution, liProjection,
@@ -293,7 +298,8 @@
                         url: "http://localhost:8080/geoserver/wms",
                         params: {'LAYERS': e.value},
                         ratio: 1,
-                        serverType: 'geoserver'
+                        serverType: 'geoserver',
+                        crossOrigin: "Anonymous"
                     })
                 });
                 addedLayerGroup.getLayers().insertAt(0, newlayer);
@@ -968,9 +974,9 @@ selectShape.addEventListener('change', () => {
 
 function search(something) {
     let layerVal = selectSearchLayer.options[selectSearchLayer.selectedIndex].value;
-    const url = "http://localhost:8080/geoserver/wfs?request=GetFeature&version=1.1.0&typeName="+layerVal+"&outputFormat=json&cql_filter=INTERSECTS(the_geom,"+something+")";
+    const url = "http://localhost:8080/geoserver/wfs?request=GetFeature&version=1.1.0&typeName="+layerVal+"&outputFormat=json&CQL_FILTER=INTERSECTS(the_geom,"+something+")";
     fetch(url, {
-        methid: "GET"
+        method: "GET"
     })
     .then((response) => {
         return response.json();
@@ -980,3 +986,125 @@ function search(something) {
     })
     console.log(url);
 }
+
+const scaleLine = new ol.control.ScaleLine({bar: true, text: true, minWidth: 125, units: 'us'});
+map.addControl(scaleLine);
+
+const dims = {
+    a0: [1189, 841],
+    a1: [841, 594],
+    a2: [594, 420],
+    a3: [420, 297],
+    a4: [297, 210],
+    a5: [210, 148],
+};
+
+const exportButton = document.getElementById('export-pdf');
+
+exportButton.addEventListener(
+    'click',
+    function () {
+      exportButton.disabled = true;
+      document.body.style.cursor = 'progress';
+  
+      const format = document.getElementById('format').value;
+      const resolution = document.getElementById('resolution').value;
+      const dim = dims[format];
+      const width = Math.round((dim[0] * resolution) / 25.4);
+      const height = Math.round((dim[1] * resolution) / 25.4);
+      const size = map.getSize();
+      const viewResolution = map.getView().getResolution();
+  
+      map.once('rendercomplete', function () {
+        const mapCanvas = document.createElement('canvas');
+        // mapCanvas.crossOrigin = "*";
+        mapCanvas.width = width;
+        mapCanvas.height = height;
+        const mapContext = mapCanvas.getContext('2d');
+        Array.prototype.forEach.call(
+          document.querySelectorAll('.ol-layer canvas'),
+          function (canvas) {
+            if (canvas.width > 0) {
+              const opacity = canvas.parentNode.style.opacity;
+              mapContext.globalAlpha = opacity === '' ? 1 : Number(opacity);
+              const transform = canvas.style.transform;
+              // Get the transform parameters from the style's transform matrix
+              const matrix = transform
+                .match(/^matrix\(([^\(]*)\)$/)[1]
+                .split(',')
+                .map(Number);
+              // Apply the transform to the export map context
+              CanvasRenderingContext2D.prototype.setTransform.apply(
+                mapContext,
+                matrix
+              );
+              mapContext.drawImage(canvas, 0, 0);
+            }
+          }
+        );
+        const pdf = new jspdf.jsPDF('landscape', undefined, format);
+        pdf.addImage(
+          mapCanvas.toDataURL('image/jpeg'),
+          'JPEG',
+          0,
+          0,
+          dim[0],
+          dim[1]
+        );
+        pdf.save('map.pdf');
+        // Reset original map size
+        map.setSize(size);
+        map.getView().setResolution(viewResolution);
+        exportButton.disabled = false;
+        document.body.style.cursor = 'auto';
+      });
+  
+      // Set print size
+      const printSize = [width, height];
+      map.setSize(printSize);
+      const scaling = Math.min(width / size[0], height / size[1]);
+      map.getView().setResolution(viewResolution / scaling);
+    },
+    false
+  );
+
+  document.getElementById('export-png').addEventListener('click', function () {
+    map.once('rendercomplete', function () {
+      const mapCanvas = document.createElement('canvas');
+      const size = map.getSize();
+      mapCanvas.width = size[0];
+      mapCanvas.height = size[1];
+      const mapContext = mapCanvas.getContext('2d');
+      Array.prototype.forEach.call(
+        document.querySelectorAll('.ol-layer canvas'),
+        function (canvas) {
+          if (canvas.width > 0) {
+            const opacity = canvas.parentNode.style.opacity;
+            mapContext.globalAlpha = opacity === '' ? 1 : Number(opacity);
+            const transform = canvas.style.transform;
+            // Get the transform parameters from the style's transform matrix
+            const matrix = transform
+              .match(/^matrix\(([^\(]*)\)$/)[1]
+              .split(',')
+              .map(Number);
+            // Apply the transform to the export map context
+            CanvasRenderingContext2D.prototype.setTransform.apply(
+              mapContext,
+              matrix
+            );
+            mapContext.drawImage(canvas, 0, 0);
+          }
+        }
+      );
+      if (navigator.msSaveBlob) {
+        // link download attribute does not work on MS browsers
+        navigator.msSaveBlob(mapCanvas.msToBlob(), 'map.png');
+      } else {
+        const link = document.getElementById('image-download');
+        link.href = mapCanvas.toDataURL();
+        link.click();
+      }
+    });
+    map.renderSync();
+  });
+  

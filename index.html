@@ -21,8 +21,8 @@
                     <h2>Base Maps</h2>
                     <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMStandard'>OSM Standard<br>
                     <input type="radio" class='basemap' name='baseLayerRadioButton' value='OSMHumanitarian'>OSM Humanitarian<br>
-                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='StamenTerrain' checked>Stamen Terrain<br>
-                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='randomArcGIS'>World Topographical<br>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='StamenTerrain'>Stamen Terrain<br>
+                    <input type="radio" class='basemap' name='baseLayerRadioButton' value='randomArcGIS' checked>World Topographical<br>
                     <input type="radio" class='basemap' name='baseLayerRadioButton' value='USATopo'>USA Topographical<br>
 
                     <h2>Base Map Layers</h2>
@@ -96,7 +96,25 @@
                         <button id="hidesearch">Hide</button>
                     </div>
                 </div>
-                
+                <form class="form">
+                    <label for="format">Page size </label>
+                    <select id="format">
+                      <option value="a0">A0 (slow)</option>
+                      <option value="a1">A1</option>
+                      <option value="a2">A2</option>
+                      <option value="a3">A3</option>
+                      <option value="a4" selected>A4</option>
+                      <option value="a5">A5 (fast)</option>
+                    </select>
+                    <label for="resolution">Resolution </label>
+                    <select id="resolution">
+                      <option value="72">72 dpi (fast)</option>
+                      <option value="150">150 dpi</option>
+                      <option value="200" selected>200 dpi</option>
+                      <option value="300">300 dpi (slow)</option>
+                    </select>
+                  </form>
+                  <button id="export-pdf">Export PDF</button>
                 
             </div>
         </div>
@@ -113,11 +131,16 @@
                     <img id="epicinfo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Infobox_info_icon.svg/1024px-Infobox_info_icon.svg.png" alt="info">
                     <span class="tooltiptext">Projection: EPSG:2263 <br> Unit system: Imperial</span>
                 </div>
+                <br>
+                <a id="export-png" class="btn btn-default"><i class="fa fa-download"></i> Download PNG</a>
+                <a id="image-download" download="map.png"></a>
               </form>
             <div id="info"></div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.4.3/build/ol.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
     <script src="libs/v6.9.0-dist/ol.js"></script>
     <script src="https://unpkg.com/ol-layerswitcher@3.8.3"></script>
     <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
