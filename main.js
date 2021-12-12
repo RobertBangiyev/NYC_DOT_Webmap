@@ -5,6 +5,24 @@
     ol.proj.proj4.register(proj4);
     const liProjection = ol.proj.get("EPSG:2263");
 
+    const container = document.getElementById('popup');
+const content = document.getElementById('popup-content');
+const closer = document.getElementById('popup-closer');
+
+const overlay = new ol.Overlay({
+    element: container,
+    autoPan: true,
+    autoPanAnimation: {
+      duration: 250,
+    },
+});
+
+closer.onclick = function () {
+    overlay.setPosition(undefined);
+    closer.blur();
+    return false;
+};
+
     const map = new ol.Map({
         view: new ol.View({
             // center: [-8236575.792110519, 4973235.140319245],
@@ -17,6 +35,7 @@
             extent: [850024.8342633599, 100063.57546333139, 1109052.3210164765, 299395.97671042057]
             // extent: [-8267536.611922189, 4938222.188713483, -8200877.417120842, 4996755.287155063]
         }),
+        overlays: [overlay],
         target: 'js-map'
     })
 
@@ -171,7 +190,7 @@
     map.addControl(layerSwitcher);
     
     function getInfoBase(evt) {
-        document.getElementById('info').innerHTML = '';
+        // document.getElementById('info').innerHTML = '';
         const viewResolution = /** @type {number} */ (map.getView().getResolution());
         let no_layers = allLayerGroup.getLayers().get('length');
         let url = new Array();
@@ -194,16 +213,25 @@
                     fetch(url[i])
                       .then((response) => response.text())
                       .then((html) => {
-                        // console.log(html);
-                        document.getElementById('info').innerHTML = html;
-                        const hasData = document.getElementsByClassName('featureInfo');
-                        if(hasData.length > 0) {
-                            theMap.classList.add('space-map');
-                            console.log("has something");
+                        console.log(html);
+                        const table = html.indexOf(`table class="featureInfo"`);
+                        if(table != -1) {
+                            content.innerHTML = html;
+                            overlay.setPosition(evt.coordinate);
                         }
                         else {
-                            theMap.classList.remove('space-map');
+                            overlay.setPosition(undefined);
+                            closer.blur();
                         }
+                        // document.getElementById('info').innerHTML = html;
+                        // const hasData = document.getElementsByClassName('featureInfo');
+                        // if(hasData.length > 0) {
+                        //     theMap.classList.add('space-map');
+                        //     console.log("has something");
+                        // }
+                        // else {
+                        //     theMap.classList.remove('space-map');
+                        // }
                     });
                 }
             }
@@ -1033,6 +1061,7 @@ exportButton.addEventListener(
                 .match(/^matrix\(([^\(]*)\)$/)[1]
                 .split(',')
                 .map(Number);
+            console.log(matrix);
               // Apply the transform to the export map context
               CanvasRenderingContext2D.prototype.setTransform.apply(
                 mapContext,
@@ -1051,6 +1080,9 @@ exportButton.addEventListener(
           dim[0],
           dim[1]
         );
+        console.log(pdf);
+        pdf.autoPrint();
+        pdf.output('dataurlnewwindow');
         pdf.save('map.pdf');
         // Reset original map size
         map.setSize(size);
@@ -1106,5 +1138,37 @@ exportButton.addEventListener(
       }
     });
     map.renderSync();
-  });
-  
+});
+
+document.getElementById('print-map').addEventListener('click', function () {
+    map.once('rendercomplete', function () {
+      const mapCanvas = document.createElement('canvas');
+      const size = map.getSize();
+      mapCanvas.width = size[0];
+      mapCanvas.height = size[1];
+      const mapContext = mapCanvas.getContext('2d');
+      Array.prototype.forEach.call(
+        document.querySelectorAll('.ol-layer canvas'),
+        function (canvas) {
+          if (canvas.width > 0) {
+            const opacity = canvas.parentNode.style.opacity;
+            mapContext.globalAlpha = opacity === '' ? 1 : Number(opacity);
+            const transform = canvas.style.transform;
+            // Get the transform parameters from the style's transform matrix
+            const matrix = transform
+              .match(/^matrix\(([^\(]*)\)$/)[1]
+              .split(',')
+              .map(Number);
+            // Apply the transform to the export map context
+            CanvasRenderingContext2D.prototype.setTransform.apply(
+              mapContext,
+              matrix
+            );
+            mapContext.drawImage(canvas, 0, 0);
+          }
+        }
+      );
+      printJS({printable: mapCanvas.toDataURL(), type: 'image', imageStyle: 'width:100%'});
+    });
+    map.renderSync();
+});
