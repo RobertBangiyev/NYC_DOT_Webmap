@@ -458,8 +458,17 @@ closer.onclick = function () {
             const reader = new FileReader();
             reader.onload = function() {
                 console.log(reader.result);
-                //TODO
-                
+                const geoJson = csv2geojson.csv2geojson(reader.result, function(err, data) {
+                    // console.log(data);
+                    const vector = new ol.layer.Vector({
+                        title: title,
+                        visible: false,
+                        source: new ol.source.Vector({
+                            features: new ol.format.GeoJSON().readFeatures(data, {featureProjection: liProjection})
+                        })
+                    });
+                    addedLayerGroup.getLayers().insertAt(0, vector);
+                })
             }
             reader.readAsText(importedFile);
         }
