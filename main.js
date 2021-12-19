@@ -23,6 +23,9 @@ closer.onclick = function () {
     return false;
 };
 
+let allowPops = true;
+let otherVisibility = false;
+
     const map = new ol.Map({
         view: new ol.View({
             // center: [-8236575.792110519, 4973235.140319245],
@@ -41,9 +44,6 @@ closer.onclick = function () {
 
     const theMap = document.querySelector('#js-map');
     map.on('click', getInfoBase);
-    map.on('click', (e) => {
-        console.log(e.coordinate);
-    })
     map.addControl(new ol.control.ZoomSlider());
 
     // let mousePosition = new ol.control.MousePosition();
@@ -190,50 +190,86 @@ closer.onclick = function () {
     map.addControl(layerSwitcher);
     
     function getInfoBase(evt) {
-        // document.getElementById('info').innerHTML = '';
-        const viewResolution = /** @type {number} */ (map.getView().getResolution());
-        let no_layers = allLayerGroup.getLayers().get('length');
-        let url = new Array();
-	    let wmsSource = new Array();
-	    let layer_title = new Array();
-        for (let i = 0; i < no_layers; i++) {
-            let visibility = allLayerGroup.getLayers().item(i).getVisible();
-            if(visibility == true) {
-                layer_title[i] = allLayerGroup.getLayers().item(i).get('title');
-                wmsSource[i] = new ol.source.ImageWMS({
-                    url: 'http://localhost:8080/geoserver/wms',
-                    params: {'LAYERS': layer_title[i]},
-                    serverType: 'geoserver',
-                    crossOrigin: 'Anonymous'
-                });
-                url[i] = wmsSource[i].getFeatureInfoUrl(
-                    evt.coordinate, viewResolution, liProjection,
-                    {'INFO_FORMAT': 'text/html'});
-                if (url[i]) {
-                    fetch(url[i])
-                      .then((response) => response.text())
-                      .then((html) => {
-                        console.log(html);
-                        const table = html.indexOf(`table class="featureInfo"`);
-                        if(table != -1) {
-                            content.innerHTML = html;
-                            overlay.setPosition(evt.coordinate);
+        if(allowPops) {
+            let foundFeatures = false;
+            // document.getElementById('info').innerHTML = '';
+            const viewResolution = /** @type {number} */ (map.getView().getResolution());
+            let no_layers = allLayerGroup.getLayers().get('length');
+            let url = new Array();
+            let wmsSource = new Array();
+            let layer_title = new Array();
+            let newFeatures = map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
+                return feature;
+            });
+            let epicFinish = false;
+            const epicTable = document.createElement('table');
+            if(newFeatures) {
+                let geometry = newFeatures.getGeometry();
+                let coord = geometry.getCoordinates();
+                newFeatures = newFeatures['A'];
+                let columns = [];
+                epicTable.style.border = '1px solid black';
+                for(let i in newFeatures) {
+                        if(columns.indexOf(i) == -1 && i != 'geometry') {
+                            columns.push(i);
                         }
-                        else {
-                            overlay.setPosition(undefined);
-                            closer.blur();
-                        }
-                        // document.getElementById('info').innerHTML = html;
-                        // const hasData = document.getElementsByClassName('featureInfo');
-                        // if(hasData.length > 0) {
-                        //     theMap.classList.add('space-map');
-                        //     console.log("has something");
-                        // }
-                        // else {
-                        //     theMap.classList.remove('space-map');
-                        // }
-                    });
                 }
+                let tableRowOne = epicTable.insertRow(-1);
+                for(let i = 0; i < columns.length; i++) {
+                    const tableHeader = document.createElement('th');
+                    tableHeader.innerHTML = columns[i];
+                    tableRowOne.appendChild(tableHeader);
+                }
+                let tableRow = epicTable.insertRow(-1);
+                for(let j = 0; j < columns.length; j++) {
+                    const tableCell = tableRow.insertCell(-1);
+                    tableCell.style.border = '1px solid black';
+                    tableCell.innerHTML = newFeatures[columns[j]];
+                }
+            }
+            for (let i = 0; i < no_layers; i++) {
+                let visibility = allLayerGroup.getLayers().item(i).getVisible();
+                if(visibility == true) {
+                    otherVisibility = true;
+                    layer_title[i] = allLayerGroup.getLayers().item(i).get('title');
+                    wmsSource[i] = new ol.source.ImageWMS({
+                        url: 'http://localhost:8080/geoserver/wms',
+                        params: {'LAYERS': layer_title[i]},
+                        serverType: 'geoserver',
+                        crossOrigin: 'Anonymous'
+                    });
+                    url[i] = wmsSource[i].getFeatureInfoUrl(
+                        evt.coordinate, viewResolution, liProjection,
+                        {'INFO_FORMAT': 'text/html'});
+                    if (url[i]) {
+                        fetch(url[i])
+                        .then((response) => response.text())
+                        .then((html) => {
+                            // console.log(html);
+                            const table = html.indexOf(`table class="featureInfo"`);
+                            if(table != -1) {
+                                foundFeatures = true;
+                                content.innerHTML = html;
+                                if(newFeatures) {
+                                    // console.log(epicTable);
+                                    content.appendChild(epicTable);
+                                }
+                                overlay.setPosition(evt.coordinate);
+                            }
+                        });
+                    }
+                }
+            }
+            if(!otherVisibility || !foundFeatures) {
+                if(newFeatures) {
+                content.innerHTML = "";
+                    content.appendChild(epicTable);
+                    overlay.setPosition(evt.coordinate);
+                }
+            }
+            if(!newFeatures) {
+                overlay.setPosition(undefined);
+                closer.blur();
             }
         }
     }
@@ -265,11 +301,11 @@ closer.onclick = function () {
                     element.setVisible(index == Math.round(map.getView().getZoom()) - 12);
                 } else {
                     let basedLayerTitle = element.get('title');
-                    console.log("checked: " + whichCheckedLayers);
+                    // console.log("checked: " + whichCheckedLayers);
                     element.setVisible(basedLayerTitle === whichCheckedLayers);
                 }
             })
-            console.log(Math.round(map.getView().getZoom()))
+            // console.log(Math.round(map.getView().getZoom()))
         }
     })
 
@@ -315,10 +351,10 @@ closer.onclick = function () {
 
     addselectedbtn.addEventListener('click', function(e) {
         const checks = document.querySelectorAll('.newadds');
-        console.log(checks);
+        // console.log(checks);
         checks.forEach((e) => {
             if(e.checked) {
-                console.log(e.value);
+                // console.log(e.value);
                 const newlayer = new ol.layer.Image({
                     title: e.name,
                     visible: false,
@@ -338,10 +374,10 @@ closer.onclick = function () {
                 added.innerHTML += addthis;
                 if(layerschecked != "") {
                     document.getElementById(`${layerschecked}`).checked = true;
-                    console.log("got here");
+                    // console.log("got here");
                 }
                 allAvailableLayers = document.querySelectorAll('.layer');
-                console.log(allAvailableLayers);
+                // console.log(allAvailableLayers);
                 layerListen();
                 addlayerbtn.classList.remove('hidden');
                 addselectedbtn.classList.add('hidden');
@@ -361,7 +397,7 @@ closer.onclick = function () {
             addedLayerElements.forEach((addedLayerElement) => {
                 addedLayerElement.addEventListener('change', () => {
                     let addedLayerElementValue = addedLayerElement.id;
-                    console.log(addedLayerElementValue);
+                    // console.log(addedLayerElementValue);
                     addedLayerGroup.getLayers().forEach((element, index, array) => {
                         let addedLayerTitle = element.get('title');
                         element.setVisible(addedLayerTitle === addedLayerElementValue);
@@ -414,13 +450,16 @@ closer.onclick = function () {
         adddatalayerbtn.classList.remove('hidden');
     })
 
+    let fileLayers = [];
+
     adddatalayerbtn.addEventListener('click', () => {
+        const texts = titlelayer.value
         const title = titlelayer.value
-        let addthis = `<input type="radio" class='addedlayer layer' name='addedLayerRadio' id='${title}' value='${title}'>${title}<br>`;
+        let addthis = `<input type="radio" class='addedlayer outsidelayer layer' name='addedLayerRadio' id='${title}' value='${title}'>${title}<br>`;
         added.innerHTML += addthis;
         if(layerschecked != "") {
             document.getElementById(`${layerschecked}`).checked = true;
-            console.log("got here");
+            // console.log("got here");
         }
         const importedFile = addfile.files[0]
         if(importedFile.name.substr(importedFile.name.length-7) == 'geojson') {
@@ -437,13 +476,27 @@ closer.onclick = function () {
                 addedLayerGroup.getLayers().insertAt(0, vector);
             }
             reader.readAsDataURL(importedFile);
+
+            const newreader = new FileReader();
+            newreader.onload = function() {
+                let newGeo = JSON.parse(newreader.result);
+                newGeo['fileName'] = title;
+                fileLayers.push(newGeo);
+            }
+            newreader.readAsText(importedFile);
         }
+        
         else if(importedFile.name.substr(importedFile.name.length-3) == 'zip') {
             const reader = new FileReader();
             reader.onload = function() {
                 shp(reader.result).then(function(geojson) {
+                    fileLayers.push(geojson);
+                    const newElement = document.querySelector(`#${title}`);
+                    newElement.id = geojson['fileName'];
+                    newElement.value = geojson['fileName'];
+                    // console.log(title);
                     const vector = new ol.layer.Vector({
-                        title: title,
+                        title: geojson['fileName'],
                         visible: false,
                         source: new ol.source.Vector({
                             features: new ol.format.GeoJSON().readFeatures(geojson, {featureProjection: liProjection})
@@ -457,9 +510,9 @@ closer.onclick = function () {
         else if(importedFile.name.substr(importedFile.name.length-3) == 'csv') {
             const reader = new FileReader();
             reader.onload = function() {
-                console.log(reader.result);
                 const geoJson = csv2geojson.csv2geojson(reader.result, function(err, data) {
-                    // console.log(data);
+                    data['fileName'] = title;
+                    fileLayers.push(data);
                     const vector = new ol.layer.Vector({
                         title: title,
                         visible: false,
@@ -472,11 +525,14 @@ closer.onclick = function () {
             }
             reader.readAsText(importedFile);
         }
+        allAvailableLayers = document.querySelectorAll('.layer');
+        layerListen();
+
 
         const addedLayerElements = document.querySelectorAll('.addedlayer');
         addedLayerElements.forEach((addedLayerElement) => {
             addedLayerElement.addEventListener('change', () => {
-                let addedLayerElementValue = addedLayerElement.value;
+                let addedLayerElementValue = addedLayerElement.id;
                 addedLayerGroup.getLayers().forEach((element, index, array) => {
                     let addedLayerTitle = element.get('title');
                     element.setVisible(addedLayerTitle === addedLayerElementValue);
@@ -646,8 +702,10 @@ closer.onclick = function () {
           }
           enableDraw = false;
           map.removeInteraction(draw);
+          allowPops = true;
         }
         else {
+            allowPops = false;
           draw = new ol.interaction.Draw({
             source: source,
             type: type,
@@ -718,7 +776,7 @@ closer.onclick = function () {
        */
        function createHelpTooltip() {
         if (helpTooltipElement && enableDraw) {
-          console.log(enableDraw);
+        //   console.log(enableDraw);
           helpTooltipElement.parentNode.removeChild(helpTooltipElement);
         }
         helpTooltipElement = document.createElement('div');
@@ -760,7 +818,19 @@ closer.onclick = function () {
       
       addInteraction();
 
+
+let outsides = [];
+
 function addLayerNames() {
+    const outsideLayers = document.querySelectorAll('.outsidelayer');
+    // console.log(outsideLayers);
+    removeOptions(selectLayer);
+    removeOptions(selectSearchLayer);
+    let newOpt = document.createElement('option');
+    newOpt.value = "Select Layer";
+    newOpt.innerHTML = "Select Layer";
+    selectLayer.appendChild(newOpt.cloneNode(true));
+    selectSearchLayer.appendChild(newOpt.cloneNode(true));
     const parser = new ol.format.WMSCapabilities();
     fetch('http://localhost:8080/geoserver/wms?service=wms&version=1.1.1&request=GetCapabilities')
     .then(function (response) {
@@ -769,13 +839,6 @@ function addLayerNames() {
     .then(function (text) {
         const result = parser.read(text);
         const a = result['Capability']['Layer']['Layer']
-        removeOptions(selectLayer);
-        removeOptions(selectSearchLayer);
-        let newOpt = document.createElement('option');
-        newOpt.value = "Select Layer";
-        newOpt.innerHTML = "Select Layer";
-        selectLayer.appendChild(newOpt.cloneNode(true));
-        selectSearchLayer.appendChild(newOpt.cloneNode(true));
         for(let i = 0; i < a['length']; i++) {
             if(addedlayers.includes(a[i].Title)) {
                 for(let j = 0; j < allLayerGroup.getLayers().get('length'); j++) {
@@ -784,43 +847,76 @@ function addLayerNames() {
                         newOpt.value = a[i].Name;
                         newOpt.innerHTML = a[i].Title;
                         selectLayer.appendChild(newOpt.cloneNode(true));
-                        console.log(selectLayer);
-                        console.log(newOpt);
+                        // console.log(selectLayer);
+                        // console.log(newOpt);
                         selectSearchLayer.appendChild(newOpt.cloneNode(true));
                     }
                 }
             }
         }
     });
+    outsideLayers.forEach((element) => {
+        const newOpt = document.createElement('option');
+        newOpt.value = element.id;
+        newOpt.innerHTML = element.id;
+        outsides.push(element.id);
+        selectLayer.appendChild(newOpt.cloneNode(true));
+        selectSearchLayer.appendChild(newOpt.cloneNode(true));
+    });
 }
 
 function addLayerAttributes() {
-    fetch("http://localhost:8080/geoserver/wfs?service=WFS&request=DescribeFeatureType&version=1.1.0&typeName=" + selectLayer.value + "&outputFormat=application/json", {
-        method: 'GET'
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(text) {
+    if(!outsides.includes(selectLayer.value)) {
+        fetch("http://localhost:8080/geoserver/wfs?service=WFS&request=DescribeFeatureType&version=1.1.0&typeName=" + selectLayer.value + "&outputFormat=application/json", {
+            method: 'GET'
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(text) {
+            removeOptions(selectAttribute);
+            let newOpt = document.createElement('option');
+            newOpt.value = "Select Attribute";
+            newOpt.innerHTML = "Select Attribute";
+            selectAttribute.appendChild(newOpt);
+            // console.log(text['featureTypes'][0]['properties']);
+            allFeatures = text['featureTypes'][0]['properties'];
+            totalfeatures = text['featureTypes'][0]['properties'].length;
+            for(let i = 0; i < totalfeatures; i++) {
+                // console.log(allFeatures[i]['name']);
+                featureName = allFeatures[i]['name'];
+                if(featureName != 'the_geom' && featureName != 'geom') {
+                    let newOpt = document.createElement('option');
+                    newOpt.value = allFeatures[i]['type'];
+                    newOpt.innerHTML = featureName;
+                    selectAttribute.appendChild(newOpt);
+                }
+            }
+        })
+    }
+    else {
         removeOptions(selectAttribute);
         let newOpt = document.createElement('option');
         newOpt.value = "Select Attribute";
         newOpt.innerHTML = "Select Attribute";
         selectAttribute.appendChild(newOpt);
-        console.log(text['featureTypes'][0]['properties']);
-        allFeatures = text['featureTypes'][0]['properties'];
-        totalfeatures = text['featureTypes'][0]['properties'].length;
-        for(let i = 0; i < totalfeatures; i++) {
-            console.log(allFeatures[i]['name']);
-            featureName = allFeatures[i]['name'];
-            if(featureName != 'the_geom' && featureName != 'geom') {
-                let newOpt = document.createElement('option');
-                newOpt.value = allFeatures[i]['type'];
-                newOpt.innerHTML = featureName;
-                selectAttribute.appendChild(newOpt);
+        // console.log(fileLayers);
+        let features;
+        for(let i=0; i < fileLayers.length; i++) {
+            if(fileLayers[i]['fileName'] == selectLayer.value) {
+                features = fileLayers[i]['features'];
+                // console.log(features);
             }
         }
-    })
+        const properties = features[0]['properties'];
+        // console.log(properties);
+        for(let j in properties) {
+            let newerOpt = document.createElement('option');
+            // newerOpt.value = allFeatures[i]['type'];
+            newerOpt.innerHTML = j;
+            selectAttribute.appendChild(newerOpt);
+        }
+    }
 }
 
 function addOperator() {
@@ -830,7 +926,7 @@ function addOperator() {
     newOpt.innerHTML = "Select Operator";
     selectOperator.appendChild(newOpt);
     const featureType = selectAttribute.value;
-    console.log(featureType);
+    // console.log(featureType);
     if(featureType == 'xsd:short' || featureType == 'xsd:int' || featureType == 'xsd:double' || featureType == 'xsd:number') {
         let newOpt = document.createElement('option');
         newOpt.value = "<";
@@ -904,29 +1000,64 @@ function query() {
     let attributeVal = selectAttribute.options[selectAttribute.selectedIndex].text;
     let operatorVal = selectOperator.value;
     let inputVal = queryVal.value;
-    console.log(layerVal + " " + attributeVal + " " + operatorVal + " " + inputVal);
-    if(operatorVal == 'ILike') {
-        inputVal = ""+inputVal+"%25";
-        console.log(inputVal);
+    if(!outsides.includes(selectLayer.value)) {
+        // console.log(layerVal + " " + attributeVal + " " + operatorVal + " " + inputVal);
+        if(operatorVal == 'ILike') {
+            inputVal = ""+inputVal+"%25";
+        }
+        let url = "http://localhost:8080/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName="+layerVal+"&CQL_FILTER="+attributeVal+"+"+operatorVal+"+'"+inputVal+"'&outputFormat=application/json";
+        // console.log(url);
+        fetch(url, {
+            method: "GET"
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(text) {
+            let features = text['features'];
+            let columns = [];
+            const table = document.createElement('table');
+            table.style.border = '1px solid black';
+            for(let i = 0; i < features.length; i++) {
+                for(const column in features[i]['properties']) {
+                    if(columns.indexOf(column) == -1) {
+                        columns.push(column);
+                    }
+                }
+            }
+            let tableRow = table.insertRow(-1);
+            for(let i = 0; i < columns.length; i++) {
+                const tableHeader = document.createElement('th');
+                tableHeader.innerHTML = columns[i];
+                tableRow.appendChild(tableHeader);
+            }
+            for(let i = 0; i < features.length; i++) {
+                let tableRow = table.insertRow(-1);
+                for(let j = 0; j < columns.length; j++) {
+                    const tableCell = tableRow.insertCell(-1);
+                    tableCell.style.border = '1px solid black';
+                    tableCell.innerHTML = features[i]['properties'][columns[j]];
+                }
+            }
+            const infoPlace = document.querySelector('#info')
+            infoPlace.innerHTML = "";
+            theMap.classList.add('space-map');
+            infoPlace.appendChild(table);
+        })
     }
-    let url = "http://localhost:8080/geoserver/ows?service=WFS&version=1.1.0&request=GetFeature&typeName="+layerVal+"&CQL_FILTER="+attributeVal+"+"+operatorVal+"+'"+inputVal+"'&outputFormat=application/json";
-    console.log(url);
-    fetch(url, {
-        method: "GET"
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(text) {
-        let features = text['features'];
+    else {
+        let features;
+        for(let i=0; i < fileLayers.length; i++) {
+            if(fileLayers[i]['fileName'] == selectLayer.value) {
+                features = fileLayers[i]['features'];
+            }
+        }
         let columns = [];
         const table = document.createElement('table');
         table.style.border = '1px solid black';
-        for(let i = 0; i < features.length; i++) {
-            for(const column in features[i]['properties']) {
-                if(columns.indexOf(column) == -1) {
-                    columns.push(column);
-                }
+        for(const column in features[0]['properties']) {
+            if(columns.indexOf(column) == -1) {
+                columns.push(column);
             }
         }
         let tableRow = table.insertRow(-1);
@@ -935,20 +1066,22 @@ function query() {
             tableHeader.innerHTML = columns[i];
             tableRow.appendChild(tableHeader);
         }
-        for(let i = 0; i < features.length; i++) {
-            let tableRow = table.insertRow(-1);
-            for(let j = 0; j < columns.length; j++) {
-                const tableCell = tableRow.insertCell(-1);
-                tableCell.style.border = '1px solid black';
-                tableCell.innerHTML = features[i]['properties'][columns[j]];
+        for(let i=0; i < features.length; i++) {
+            const properties = features[i]['properties'];
+            if(properties[attributeVal] === inputVal) {
+                let tableRow = table.insertRow(-1);
+                for(let j in properties) {
+                    const tableCell = tableRow.insertCell(-1);
+                    tableCell.style.border = '1px solid black';
+                    tableCell.innerHTML = properties[j];
+                }
             }
         }
-        console.log(table);
         const infoPlace = document.querySelector('#info')
         infoPlace.innerHTML = "";
         theMap.classList.add('space-map');
         infoPlace.appendChild(table);
-    })
+    }
 }
 
 loadQuery.addEventListener('click', query);
@@ -992,7 +1125,6 @@ function addDrawing() {
                 let feature = evt.feature;
                 // let coords = feature.getGeometry();
                 let coords = feature.getGeometry().transform('EPSG:2263', 'EPSG:4326');
-                console.log(coords);
                 let format = new ol.format.WKT();
                 if(selectShape.value === 'Circle') {
                     coords = ol.geom.Polygon.circular(coords.getCenter(), coords.getRadius());
@@ -1070,7 +1202,7 @@ exportButton.addEventListener(
                 .match(/^matrix\(([^\(]*)\)$/)[1]
                 .split(',')
                 .map(Number);
-            console.log(matrix);
+            // console.log(matrix);
               // Apply the transform to the export map context
               CanvasRenderingContext2D.prototype.setTransform.apply(
                 mapContext,
@@ -1089,7 +1221,7 @@ exportButton.addEventListener(
           dim[0],
           dim[1]
         );
-        console.log(pdf);
+        // console.log(pdf);
         pdf.autoPrint();
         pdf.output('dataurlnewwindow');
         pdf.save('map.pdf');
