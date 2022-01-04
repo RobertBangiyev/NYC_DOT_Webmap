@@ -1221,9 +1221,6 @@ exportButton.addEventListener(
           dim[0],
           dim[1]
         );
-        // console.log(pdf);
-        pdf.autoPrint();
-        pdf.output('dataurlnewwindow');
         pdf.save('map.pdf');
         // Reset original map size
         map.setSize(size);
