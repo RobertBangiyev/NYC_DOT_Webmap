@@ -201,7 +201,7 @@ let otherVisibility = false;
             let newFeatures = map.forEachFeatureAtPixel(evt.pixel, (feature, layer) => {
                 return feature;
             });
-            let epicFinish = false;
+            let oneAdded = false;
             const epicTable = document.createElement('table');
             if(newFeatures) {
                 let geometry = newFeatures.getGeometry();
@@ -249,7 +249,13 @@ let otherVisibility = false;
                             const table = html.indexOf(`table class="featureInfo"`);
                             if(table != -1) {
                                 foundFeatures = true;
-                                content.innerHTML = html;
+                                if(!oneAdded) {
+                                    oneAdded = true;
+                                    content.innerHTML = html;
+                                } else {
+                                    oneAdded = false;
+                                    content.innerHTML += html;
+                                }
                                 if(newFeatures) {
                                     // console.log(epicTable);
                                     content.appendChild(epicTable);
@@ -297,7 +303,7 @@ let otherVisibility = false;
             currentZoom = map.getView().getZoom();
             basedLayerGroup.getLayers().forEach((element, index, array) => {
                 if(Math.round(map.getView().getZoom()) - 12 >= 0 && Math.round(map.getView().getZoom()) < 15) {
-                    console.log(`element index: ${index} \ncurrentthing: ${Math.round(map.getView().getZoom()) - 12}`)
+                    // console.log(`element index: ${index} \ncurrentthing: ${Math.round(map.getView().getZoom()) - 12}`)
                     element.setVisible(index == Math.round(map.getView().getZoom()) - 12);
                 } else {
                     let basedLayerTitle = element.get('title');
@@ -1039,7 +1045,7 @@ function query() {
                     tableCell.innerHTML = features[i]['properties'][columns[j]];
                 }
             }
-            const infoPlace = document.querySelector('#info')
+            const infoPlace = document.querySelector('#info');
             infoPlace.innerHTML = "";
             theMap.classList.add('space-map');
             infoPlace.appendChild(table);
@@ -1077,7 +1083,7 @@ function query() {
                 }
             }
         }
-        const infoPlace = document.querySelector('#info')
+        const infoPlace = document.querySelector('#info');
         infoPlace.innerHTML = "";
         theMap.classList.add('space-map');
         infoPlace.appendChild(table);
@@ -1309,4 +1315,11 @@ document.getElementById('print-map').addEventListener('click', function () {
       printJS({printable: mapCanvas.toDataURL(), type: 'image', imageStyle: 'width:100%'});
     });
     map.renderSync();
+});
+
+const clearQuery = document.querySelector('#clear-query');
+clearQuery.addEventListener('click', () => {
+    const infoPlace = document.querySelector('#info');
+    infoPlace.innerHTML = "";
+    theMap.classList.remove('space-map');
 });

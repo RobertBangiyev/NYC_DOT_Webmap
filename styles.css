@@ -228,3 +228,7 @@ h2 {
   .ol-popup-closer:after {
     content: "✖";
   }
+
+.form-inline {
+    margin-bottom: 0;
+}
